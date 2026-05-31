@@ -1,0 +1,22 @@
+node_modules/
+.env
+.env.local
+.env.*.local
+*.log
+npm-debug.log*
+
+# build outputs
+.svelte-kit/
+build/
+dist/
+.next/
+.turbo/
+
+# generated i18n (paraglide compiles at build/dev time)
+src/lib/paraglide/
+packages/i18n/project.inlang/cache/
+
+# misc
+.DS_Store
+coverage/
+*.tsbuildinfo

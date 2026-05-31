@@ -1,0 +1,37 @@
+# Local parity for the Phase 1 stack. One Postgres (Supabase stand-in, same engine)
+# and one Redis. Phase 2 adds Medusa, Payload, and the worker as services here.
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: better-life-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: better_life
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d better_life"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  redis:
+    image: redis:7-alpine
+    container_name: better-life-redis
+    restart: unless-stopped
+    # Present for parity with the full stack. No Phase 1 consumer; Medusa + the
+    # Inngest worker use it from Phase 2.
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+volumes:
+  pgdata:
