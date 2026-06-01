@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "target": "ES2021",
+    "module": "Node16",
+    "moduleResolution": "Node16",
+    "esModuleInterop": true,
+    "allowJs": true,
+    "strict": false,
+    "skipLibCheck": true,
+    "jsx": "react-jsx",
+    "outDir": "./.medusa/server"
+  },
+  "include": ["src", "medusa-config.ts", ".medusa/types/*.d.ts"],
+  "exclude": ["node_modules", ".medusa", "dist"]
+}

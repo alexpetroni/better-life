@@ -13,7 +13,7 @@
     "dev:web": "npm run dev -w @better-life/web",
     "dev:cms": "npm run dev -w @better-life/cms",
     "build": "npm run build -w @better-life/emails && npm run build -w @better-life/cms && npm run build -w @better-life/web",
-    "migrate": "node scripts/migrate.mjs",
+    "migrate": "node scripts/migrate.mjs && npm run migrate -w @better-life/medusa",
     "seed": "tsx seed/index.ts",
     "erase-lead": "tsx scripts/erase-lead.ts",
     "db:up": "docker compose up -d",
