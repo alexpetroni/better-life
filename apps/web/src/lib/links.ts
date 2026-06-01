@@ -17,6 +17,18 @@ export function articleHref(article: { slug: string; pillarSlug: string }): stri
     : `/articles/${article.slug}`
 }
 
+export function formatPrice(amount: number | null | undefined, currency = 'ron', locale = 'ro'): string {
+  if (amount == null) return ''
+  try {
+    return new Intl.NumberFormat(locale === 'ro' ? 'ro-RO' : 'en-GB', {
+      style: 'currency',
+      currency: currency.toUpperCase(),
+    }).format(amount)
+  } catch {
+    return `${amount} ${currency.toUpperCase()}`
+  }
+}
+
 export function formatDate(iso: string | undefined, locale = 'ro'): string {
   if (!iso) return ''
   try {

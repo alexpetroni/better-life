@@ -109,5 +109,22 @@
   "claim_meta_title": "Your results · Better Life",
   "claim_title": "Your results are saved",
   "claim_body": "We've kept your profile safe. Soon you'll be able to claim it when you create an account.",
-  "claim_no_token": "Invalid or expired link. You can retake the test anytime."
+  "claim_no_token": "Invalid or expired link. You can retake the test anytime.",
+
+  "nav_shop": "Shop",
+  "shop_title": "Somnium shop",
+  "shop_subtitle": "Products chosen for better sleep, organized by the problem they solve.",
+  "shop_all": "All products",
+  "shop_empty": "No products available right now.",
+  "add_to_cart": "Add to cart",
+  "added_to_cart": "Added to cart",
+  "cart_title": "Your cart",
+  "cart_empty": "Your cart is empty.",
+  "cart_subtotal": "Subtotal",
+  "cart_qty": "Quantity",
+  "cart_remove": "Remove",
+  "cart_view": "View cart",
+  "cart_checkout": "Checkout",
+  "continue_shopping": "Continue shopping",
+  "back_to_shop": "Back to shop"
 }

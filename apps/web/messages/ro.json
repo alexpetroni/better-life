@@ -109,5 +109,22 @@
   "claim_meta_title": "Rezultatele tale · Better Life",
   "claim_title": "Rezultatele tale sunt salvate",
   "claim_body": "Am păstrat profilul tău în siguranță. În curând îl vei putea revendica la crearea contului.",
-  "claim_no_token": "Link invalid sau expirat. Poți relua testul oricând."
+  "claim_no_token": "Link invalid sau expirat. Poți relua testul oricând.",
+
+  "nav_shop": "Magazin",
+  "shop_title": "Magazin Somnium",
+  "shop_subtitle": "Produse alese pentru un somn mai bun, organizate după problema pe care o rezolvă.",
+  "shop_all": "Toate produsele",
+  "shop_empty": "Momentan nu sunt produse disponibile.",
+  "add_to_cart": "Adaugă în coș",
+  "added_to_cart": "Adăugat în coș",
+  "cart_title": "Coșul tău",
+  "cart_empty": "Coșul tău e gol.",
+  "cart_subtotal": "Subtotal",
+  "cart_qty": "Cantitate",
+  "cart_remove": "Elimină",
+  "cart_view": "Vezi coșul",
+  "cart_checkout": "Finalizează comanda",
+  "continue_shopping": "Continuă cumpărăturile",
+  "back_to_shop": "Înapoi la magazin"
 }

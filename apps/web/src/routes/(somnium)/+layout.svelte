@@ -11,8 +11,10 @@
   const accent = $derived(somnium?.accentColor ?? '#4f46e5')
   const links = $derived([
     { href: '/somnium', label: m.nav_home() },
+    { href: '/somnium/shop', label: m.nav_shop() },
     { href: '/somnium/blog', label: m.nav_articles() },
     { href: '/screening', label: m.nav_screening() },
+    { href: '/cart', label: m.cart_view() },
   ])
 </script>
 

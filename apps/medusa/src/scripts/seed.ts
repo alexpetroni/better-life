@@ -14,6 +14,26 @@ import {
 } from '@medusajs/medusa/core-flows'
 import { ExecArgs } from '@medusajs/framework/types'
 import { ContainerRegistrationKeys, Modules } from '@medusajs/framework/utils'
+import fs from 'fs'
+import path from 'path'
+
+// Persist the publishable key into the repo-root .env so the storefront BFF picks
+// it up with no manual step (clean clone: migrate → seed → run).
+function writePublishableKey(token: string) {
+  const envPath = path.resolve(process.cwd(), '../../.env')
+  try {
+    let env = fs.existsSync(envPath) ? fs.readFileSync(envPath, 'utf8') : ''
+    if (/^MEDUSA_PUBLISHABLE_KEY=.*/m.test(env)) {
+      env = env.replace(/^MEDUSA_PUBLISHABLE_KEY=.*/m, `MEDUSA_PUBLISHABLE_KEY=${token}`)
+    } else {
+      env += `\nMEDUSA_PUBLISHABLE_KEY=${token}\n`
+    }
+    fs.writeFileSync(envPath, env)
+    return true
+  } catch {
+    return false
+  }
+}
 
 // Idempotent demo catalog for Somnium (RON). Re-runs reuse existing records,
 // keyed on stable handles/names — products enter via this seed, never duplicated.
@@ -72,7 +92,12 @@ export default async function seed({ container }: ExecArgs) {
     })
     logger.info('  ＋ publishable key created — set MEDUSA_PUBLISHABLE_KEY in .env')
   }
-  logger.info(`  ℹ MEDUSA_PUBLISHABLE_KEY=${publishableKey.token}`)
+  const wrote = writePublishableKey(publishableKey.token)
+  logger.info(
+    wrote
+      ? `  ✔ MEDUSA_PUBLISHABLE_KEY written to .env (${publishableKey.token.slice(0, 12)}…)`
+      : `  ℹ MEDUSA_PUBLISHABLE_KEY=${publishableKey.token} (set this in .env)`
+  )
 
   // ── Stock location + fulfillment ───────────────────────────────────────────
   const { data: locations } = await query.graph({
@@ -123,7 +148,7 @@ export default async function seed({ container }: ExecArgs) {
           service_zone_id: fulfillmentSet.service_zones[0].id,
           shipping_profile_id: shippingProfile.id,
           type: { label: 'Standard', description: 'Livrare în 1–3 zile', code: 'standard' },
-          prices: [{ currency_code: 'ron', amount: 1990 }, { region_id: regionId, amount: 1990 }],
+          prices: [{ currency_code: 'ron', amount: 19.9 }, { region_id: regionId, amount: 19.9 }],
           rules: [
             { attribute: 'enabled_in_store', value: 'true', operator: 'eq' },
             { attribute: 'is_return', value: 'false', operator: 'eq' },
@@ -151,13 +176,14 @@ export default async function seed({ container }: ExecArgs) {
   }
 
   // ── Products (Somnium demo SKUs, pillar-tagged) ───────────────────────────--
+  // Prices are in RON major units (Medusa v2 stores decimal amounts, not bani).
   const products = [
-    { title: 'Supliment Somneo — melatonină & plante', handle: 'somneo-supliment', category: 'Greu de adormit', price: 7900, desc: 'Formulă cu melatonină și plante calmante, pentru o adormire mai ușoară.' },
-    { title: 'Mască de somn premium', handle: 'masca-de-somn', category: 'Somn neodihnitor', price: 4900, desc: 'Întuneric total, materiale moi — pentru un somn mai profund.' },
-    { title: 'Ceai de seară — relaxare', handle: 'ceai-de-seara', category: 'Greu de adormit', price: 3500, desc: 'Amestec de plante pentru ritualul de seară, fără cofeină.' },
-    { title: 'Dopuri de urechi pentru somn', handle: 'dopuri-urechi', category: 'Treziri nocturne', price: 2900, desc: 'Reduc zgomotul nocturn fără disconfort.' },
-    { title: 'Lampă de trezire — răsărit simulat', handle: 'lampa-trezire', category: 'Ritm dat peste cap', price: 19900, desc: 'Simulează răsăritul pentru o trezire mai naturală și un ritm circadian stabil.' },
-    { title: 'Magneziu glicinat — somn & relaxare', handle: 'magneziu-glicinat', category: 'Somn neodihnitor', price: 5900, desc: 'Magneziu ușor asimilabil, pentru relaxare musculară și nervoasă.' },
+    { title: 'Supliment Somneo — melatonină & plante', handle: 'somneo-supliment', category: 'Greu de adormit', price: 79, desc: 'Formulă cu melatonină și plante calmante, pentru o adormire mai ușoară.' },
+    { title: 'Mască de somn premium', handle: 'masca-de-somn', category: 'Somn neodihnitor', price: 49, desc: 'Întuneric total, materiale moi — pentru un somn mai profund.' },
+    { title: 'Ceai de seară — relaxare', handle: 'ceai-de-seara', category: 'Greu de adormit', price: 35, desc: 'Amestec de plante pentru ritualul de seară, fără cofeină.' },
+    { title: 'Dopuri de urechi pentru somn', handle: 'dopuri-urechi', category: 'Treziri nocturne', price: 29, desc: 'Reduc zgomotul nocturn fără disconfort.' },
+    { title: 'Lampă de trezire — răsărit simulat', handle: 'lampa-trezire', category: 'Ritm dat peste cap', price: 199, desc: 'Simulează răsăritul pentru o trezire mai naturală și un ritm circadian stabil.' },
+    { title: 'Magneziu glicinat — somn & relaxare', handle: 'magneziu-glicinat', category: 'Somn neodihnitor', price: 59, desc: 'Magneziu ușor asimilabil, pentru relaxare musculară și nervoasă.' },
   ]
   const { data: existingProducts } = await query.graph({ entity: 'product', fields: ['id', 'handle'] })
   const existingHandles = new Set(existingProducts.map((p: any) => p.handle))

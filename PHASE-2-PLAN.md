@@ -10,6 +10,26 @@ built to develop and test before any provider contract exists (graceful degradat
 Delivers the four artifacts the task asks for: (1) identity-promotion & claiming
 design, (2) Medusa setup, (3) Inngest order-flow map, (4) decisions needed.
 
+## Accepted deviation — Medusa schema (decided during P2-3)
+
+CLAUDE.md mandates Medusa in its own `medusa` schema. **Medusa v2 does not reliably
+support a non-public schema**: module migrations honor it, but the provider-sync
+(`pp_system_default`, `tp_system`) and module-link sync (`region_payment_provider`,
+`product_sales_channel`, …) target `public` regardless of `search_path` or
+`databaseSchema` — verified both mechanisms leaving link tables unpersisted / boot
+crashing. **Decision (user-approved): Medusa owns the `public` schema.** `app` and
+`payload` stay isolated in their own schemas; one shared database is preserved
+(Supabase-compatible). Only Medusa's namespace changes (`public`, not `medusa`); no
+functional/data/safety impact.
+
+**Promote-to-own-database path (if stronger isolation is wanted later):** because the
+BFF talks to Medusa only over HTTP (never its DB) and the sole cross-link
+(`lead.medusa_customer_id`) is a plain id with no DB-level FK, moving Medusa to a
+dedicated database is a connection-string swap + (post-launch) a `pg_dump`/restore of
+`public` — ~10 min pre-launch, ~1 hr after. Needs infra that allows a second database
+(self-hosted Postgres or a separate Supabase instance). Do NOT attempt a `medusa`
+*schema* in the shared DB — that's the unreliable path we abandoned.
+
 ## Builds on (Phase 1, shipped)
 
 - `app.leads` already has `medusa_customer_id` (nullable), `claim_token` +
