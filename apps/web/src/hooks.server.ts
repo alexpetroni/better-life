@@ -40,6 +40,26 @@ const handleUtm: Handle = async ({ event, resolve }) => {
   return resolve(event)
 }
 
+const CLAIM_COOKIE = 'bl_claim'
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+/** Capture a post-quiz claim token (?claim=…) so it survives until checkout/registration. */
+const handleClaim: Handle = async ({ event, resolve }) => {
+  const incoming = event.url.searchParams.get('claim')
+  if (incoming && UUID_RE.test(incoming)) {
+    event.cookies.set(CLAIM_COOKIE, incoming, {
+      path: '/',
+      httpOnly: true,
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 90, // 90 days
+    })
+    event.locals.claimToken = incoming
+  } else {
+    event.locals.claimToken = event.cookies.get(CLAIM_COOKIE) ?? null
+  }
+  return resolve(event)
+}
+
 /** Paraglide: resolve locale (cookie → baseLocale) and stamp <html lang>. */
 const handleParaglide: Handle = ({ event, resolve }) =>
   paraglideMiddleware(event.request, ({ request, locale }) => {
@@ -50,4 +70,4 @@ const handleParaglide: Handle = ({ event, resolve }) =>
     })
   })
 
-export const handle = sequence(handleUtm, handleParaglide)
+export const handle = sequence(handleUtm, handleClaim, handleParaglide)
