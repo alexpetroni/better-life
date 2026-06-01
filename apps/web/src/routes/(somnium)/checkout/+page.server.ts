@@ -10,6 +10,7 @@ import {
 } from '$lib/server/medusa'
 import { upsertCustomerByEmail } from '$lib/server/medusa-admin'
 import { promoteLeadToCustomer } from '$lib/server/identity'
+import { emitOrderPlaced } from '$lib/server/events'
 
 export const load: PageServerLoad = async ({ cookies }) => {
   const cartId = cookies.get('bl_cart')
@@ -64,7 +65,10 @@ export const actions: Actions = {
       }
     }
 
-    // 6. clear the cart
+    // 6. dispatch order.placed → worker runs the idempotent order effects
+    await emitOrderPlaced(order.id, 'somnium')
+
+    // 7. clear the cart
     cookies.delete('bl_cart', { path: '/' })
     return { order: { displayId: order.display_id, email: order.email } }
   },

@@ -22,3 +22,4 @@ export const MEDUSA_URL = process.env.MEDUSA_BACKEND_URL ?? 'http://localhost:90
 export const MEDUSA_PUBLISHABLE_KEY = process.env.MEDUSA_PUBLISHABLE_KEY ?? ''
 export const MEDUSA_ADMIN_EMAIL = process.env.MEDUSA_ADMIN_EMAIL ?? ''
 export const MEDUSA_ADMIN_PASSWORD = process.env.MEDUSA_ADMIN_PASSWORD ?? ''
+export const WORKER_URL = process.env.WORKER_URL ?? 'http://localhost:3002'
