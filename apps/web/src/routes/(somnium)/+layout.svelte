@@ -15,6 +15,7 @@
     { href: '/somnium/blog', label: m.nav_articles() },
     { href: '/screening', label: m.nav_screening() },
     { href: '/cart', label: m.cart_view() },
+    { href: '/account', label: m.account_title() },
   ])
 </script>
 

@@ -7,7 +7,7 @@
     "dev": "medusa develop",
     "start": "medusa start",
     "migrate": "medusa db:migrate && medusa db:sync-links",
-    "seed": "medusa exec ./src/scripts/seed.ts"
+    "seed": "medusa exec ./src/scripts/seed.ts && (medusa user -e admin@betterlife.ro -p supersecret123 2>/dev/null || true)"
   },
   "dependencies": {
     "@medusajs/admin-sdk": "2.15.5",

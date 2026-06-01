@@ -150,3 +150,126 @@ export async function removeLineItem(cartId: string, lineId: string): Promise<an
   })
   return data?.parent ?? (await getCart(cartId))
 }
+
+// ── Checkout ─────────────────────────────────────────────────────────────────
+export async function updateCart(cartId: string, data: Record<string, unknown>): Promise<any | null> {
+  const res = await medusaFetch<{ cart: any }>(`/store/carts/${cartId}`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  })
+  return res?.cart ?? null
+}
+
+export async function listCartShippingOptions(cartId: string): Promise<any[]> {
+  const res = await medusaFetch<{ shipping_options: any[] }>(`/store/shipping-options?cart_id=${cartId}`)
+  return res?.shipping_options ?? []
+}
+
+export async function addShippingMethod(cartId: string, optionId: string): Promise<any | null> {
+  const res = await medusaFetch<{ cart: any }>(`/store/carts/${cartId}/shipping-methods`, {
+    method: 'POST',
+    body: JSON.stringify({ option_id: optionId }),
+  })
+  return res?.cart ?? null
+}
+
+/** Initialize a payment session with the manual/system provider (real providers in P2-5). */
+export async function initManualPayment(cartId: string): Promise<boolean> {
+  const pc = await medusaFetch<{ payment_collection: { id: string } }>('/store/payment-collections', {
+    method: 'POST',
+    body: JSON.stringify({ cart_id: cartId }),
+  })
+  const pcId = pc?.payment_collection?.id
+  if (!pcId) return false
+  const sess = await medusaFetch(`/store/payment-collections/${pcId}/payment-sessions`, {
+    method: 'POST',
+    body: JSON.stringify({ provider_id: 'pp_system_default' }),
+  })
+  return !!sess
+}
+
+export async function completeCart(
+  cartId: string
+): Promise<{ type: 'order' | 'cart'; order?: any; error?: string }> {
+  const res = await medusaFetch<any>(`/store/carts/${cartId}/complete`, { method: 'POST' })
+  if (!res) return { type: 'cart', error: 'request_failed' }
+  if (res.type === 'order') return { type: 'order', order: res.order }
+  return { type: 'cart', error: res.error?.message ?? 'incomplete' }
+}
+
+// ── Customer auth (accounts) ─────────────────────────────────────────────────
+async function authFetch<T = any>(url: string, body: unknown): Promise<T | null> {
+  try {
+    const res = await fetch(`${MEDUSA_URL}${url}`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(body),
+    })
+    if (!res.ok) return null
+    return (await res.json()) as T
+  } catch {
+    return null
+  }
+}
+
+async function storeAuthedFetch<T = any>(path: string, token: string): Promise<T | null> {
+  if (keyMissing()) return null
+  try {
+    const res = await fetch(`${MEDUSA_URL}${path}`, {
+      headers: {
+        'x-publishable-api-key': MEDUSA_PUBLISHABLE_KEY,
+        authorization: `Bearer ${token}`,
+        accept: 'application/json',
+      },
+    })
+    if (!res.ok) return null
+    return (await res.json()) as T
+  } catch {
+    return null
+  }
+}
+
+export async function loginCustomer(email: string, password: string): Promise<string | null> {
+  const data = await authFetch<{ token: string }>('/auth/customer/emailpass', { email, password })
+  return data?.token ?? null
+}
+
+/** Register: create the auth identity + customer, return a session token + customer id. */
+export async function registerCustomer(
+  email: string,
+  password: string
+): Promise<{ token: string; customerId: string } | null> {
+  const reg = await authFetch<{ token: string }>('/auth/customer/emailpass/register', { email, password })
+  if (!reg?.token) return null
+  try {
+    const res = await fetch(`${MEDUSA_URL}/store/customers`, {
+      method: 'POST',
+      headers: {
+        'x-publishable-api-key': MEDUSA_PUBLISHABLE_KEY,
+        authorization: `Bearer ${reg.token}`,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({ email }),
+    })
+    if (!res.ok) return null
+    const customerId = (await res.json()).customer?.id
+    if (!customerId) return null
+    const token = (await loginCustomer(email, password)) ?? reg.token
+    return { token, customerId }
+  } catch {
+    return null
+  }
+}
+
+export async function getCustomerMe(token: string): Promise<{ id: string; email: string } | null> {
+  const data = await storeAuthedFetch<{ customer: any }>('/store/customers/me', token)
+  return data?.customer ? { id: data.customer.id, email: data.customer.email } : null
+}
+
+export async function listCustomerOrders(token: string): Promise<any[]> {
+  const data = await storeAuthedFetch<{ orders: any[] }>(
+    '/store/orders?limit=20&order=-created_at&fields=display_id,email,total,currency_code,created_at',
+    token
+  )
+  return data?.orders ?? []
+}

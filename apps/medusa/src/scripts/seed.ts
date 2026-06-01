@@ -185,6 +185,11 @@ export default async function seed({ container }: ExecArgs) {
     { title: 'Lampă de trezire — răsărit simulat', handle: 'lampa-trezire', category: 'Ritm dat peste cap', price: 199, desc: 'Simulează răsăritul pentru o trezire mai naturală și un ritm circadian stabil.' },
     { title: 'Magneziu glicinat — somn & relaxare', handle: 'magneziu-glicinat', category: 'Somn neodihnitor', price: 59, desc: 'Magneziu ușor asimilabil, pentru relaxare musculară și nervoasă.' },
   ]
+  // Products must be linked to a shipping profile, or checkout fails with
+  // "items require shipping profiles not satisfied by the shipping methods".
+  const [defaultProfile] = await fulfillmentModule.listShippingProfiles({ type: 'default' })
+  const shippingProfileId = defaultProfile?.id
+
   const { data: existingProducts } = await query.graph({ entity: 'product', fields: ['id', 'handle'] })
   const existingHandles = new Set(existingProducts.map((p: any) => p.handle))
   const newProducts = products.filter((p) => !existingHandles.has(p.handle))
@@ -199,7 +204,7 @@ export default async function seed({ container }: ExecArgs) {
           status: 'published' as any,
           category_ids: catByName.get(p.category) ? [catByName.get(p.category) as string] : [],
           sales_channels: [{ id: salesChannel.id }],
-          shipping_profile_id: undefined,
+          shipping_profile_id: shippingProfileId,
           metadata: { pillar: 'somnium' },
           options: [{ title: 'Variantă', values: ['Standard'] }],
           variants: [
