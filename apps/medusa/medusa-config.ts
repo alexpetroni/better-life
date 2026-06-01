@@ -30,9 +30,10 @@ if (paymentProviders.length > 0) {
 module.exports = defineConfig({
   projectConfig: {
     databaseUrl: process.env.MEDUSA_DATABASE_URL || process.env.DIRECT_URL,
-    // Isolate all Medusa tables in the dedicated `medusa` schema (created by
-    // supabase/migrations/0002). Keeps commerce separate from `app` and `payload`.
-    databaseSchema: process.env.MEDUSA_DATABASE_SCHEMA || 'medusa',
+    // Medusa owns the `public` schema (app + payload remain isolated in theirs).
+    // Medusa v2 does not reliably support a non-public schema: its provider/link
+    // sync targets public regardless of search_path or databaseSchema. Flagged
+    // deviation from CLAUDE.md; see .env.example and PHASE-2-PLAN.md.
     redisUrl: process.env.REDIS_URL,
     http: {
       storeCors: process.env.STORE_CORS || 'http://localhost:5173',
