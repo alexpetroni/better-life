@@ -7,7 +7,10 @@ import { getClient, upsertBySlug, ensureAdminUser } from './lib/payload-client'
 import { getSeedEnv } from './lib/env'
 import { pillars } from './data/pillars'
 import { somniumSleepQuiz } from './data/quizzes/somnium-sleep'
+import { betterBodyMovementQuiz } from './data/quizzes/better-body-movement'
 import { articles } from './data/articles'
+
+const quizzes = [somniumSleepQuiz, betterBodyMovementQuiz]
 
 async function main() {
   const env = getSeedEnv()
@@ -34,28 +37,23 @@ async function main() {
 
   // The demo content (articles, quiz definitions) is skipped in minimal/prod seeds.
   if (env === 'demo') {
-    // ── 2. Quizzes ────────────────────────────────────────────────────────────
-    const q = somniumSleepQuiz
-    const { id: quizId, created: quizCreated } = await upsertBySlug(payload, 'quizzes', q.slug, {
-      title: q.title,
-      hook: q.hook,
-      pillar: pillarIdBySlug.get(q.pillarSlug),
-      disclaimer: q.disclaimer,
-      resultDisclaimer: q.resultDisclaimer,
-      questions: q.questions,
-      profiles: q.profiles,
-    })
-    console.log(`  ${quizCreated ? '＋' : '↻'} quiz: ${q.slug}`)
-
-    // ── 3. Link pillar → quiz (resolves the circular reference) ────────────────
-    const somniumId = pillarIdBySlug.get('somnium')
-    if (somniumId) {
-      await payload.update({
-        collection: 'pillars',
-        id: somniumId,
-        data: { quiz: quizId },
-        overrideAccess: true,
+    // ── 2. Quizzes + 3. link each pillar → its quiz (resolves the circular ref) ─
+    for (const q of quizzes) {
+      const { id: quizId, created: quizCreated } = await upsertBySlug(payload, 'quizzes', q.slug, {
+        title: q.title,
+        hook: q.hook,
+        pillar: pillarIdBySlug.get(q.pillarSlug),
+        disclaimer: q.disclaimer,
+        resultDisclaimer: q.resultDisclaimer,
+        questions: q.questions,
+        profiles: q.profiles,
       })
+      console.log(`  ${quizCreated ? '＋' : '↻'} quiz: ${q.slug}`)
+
+      const pillarId = pillarIdBySlug.get(q.pillarSlug)
+      if (pillarId) {
+        await payload.update({ collection: 'pillars', id: pillarId, data: { quiz: quizId }, overrideAccess: true })
+      }
     }
 
     // ── 4. Articles ─────────────────────────────────────────────────────────--

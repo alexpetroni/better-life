@@ -1,14 +1,13 @@
 <script lang="ts">
   import type { PageData } from './$types'
-  import * as m from '$lib/paraglide/messages'
   import QuizFlow from '$lib/components/QuizFlow.svelte'
 
   let { data, form }: { data: PageData; form: Record<string, any> | null } = $props()
 </script>
 
 <svelte:head>
-  <title>{m.screening_meta_title()}</title>
-  <meta name="description" content={m.screening_meta_description()} />
+  <title>{data.def.title}</title>
+  {#if data.def.hook}<meta name="description" content={data.def.hook} />{/if}
 </svelte:head>
 
-<QuizFlow def={data.def} accent={data.accent} {form} restartHref="/screening" />
+<QuizFlow def={data.def} accent={data.accent} {form} restartHref={`/pillars/${data.pillarSlug}/screening`} />

@@ -52,7 +52,8 @@ export const pillars: SeedPillar[] = [
     order: 2,
     status: 'live',
     hasShop: false,
-    hasQuiz: false,
+    hasQuiz: true,
+    quizSlug: 'better-body-movement',
     hero: {
       heading: 'Un corp care te susține.',
       subheading: 'Mișcare sustenabilă, recuperare reală și energie care durează toată ziua.',
