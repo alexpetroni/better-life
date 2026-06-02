@@ -15,6 +15,7 @@
     "@better-life/contracts": "*",
     "@better-life/emails": "*",
     "dotenv": "^16.4.7",
+    "inngest": "^4.5.0",
     "pg": "^8.13.1",
     "resend": "^4.6.0"
   },

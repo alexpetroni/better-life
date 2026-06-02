@@ -3,6 +3,7 @@ import type { Actions } from './$types'
 import { isEmail } from '$lib/server/validate'
 import { upsertLeadByEmail } from '$lib/server/leads'
 import { recordConsents, CONSENT_VERSION } from '$lib/server/consent'
+import { emitNewsletterSubscribed, stampLastSeen } from '$lib/server/events'
 import * as m from '$lib/paraglide/messages'
 
 export const actions: Actions = {
@@ -25,6 +26,9 @@ export const actions: Actions = {
         locale,
       },
     ])
+
+    await stampLastSeen(id)
+    await emitNewsletterSubscribed(id)
 
     return { success: true }
   },

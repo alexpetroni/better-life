@@ -9,6 +9,22 @@
   let { data, form }: { data: PageData; form: ActionData } = $props()
   let submitting = $state(false)
 
+  // Arm abandoned-cart recovery once the shopper provides a valid email, before
+  // they finish. Fire-and-forget; failures are silent and never block checkout.
+  let identified = $state(false)
+  async function identifyCheckout(e: Event) {
+    const email = (e.currentTarget as HTMLInputElement).value.trim()
+    if (identified || !email.includes('@')) return
+    identified = true
+    try {
+      const body = new FormData()
+      body.set('email', email)
+      await fetch('?/identify', { method: 'POST', body })
+    } catch {
+      identified = false
+    }
+  }
+
   const items = $derived(data.cart?.items ?? [])
   const currency = $derived(data.cart?.currency_code ?? 'ron')
   const v = $derived((form as any)?.values ?? {})
@@ -74,6 +90,7 @@
         <legend class="px-1 text-sm font-semibold">{m.checkout_contact()}</legend>
         <label class="mt-2 block text-sm font-medium" for="co-email">{m.checkout_email()}</label>
         <input id="co-email" name="email" type="email" required autocomplete="email" value={v.email ?? ''}
+          onblur={identifyCheckout}
           class="mt-1 w-full rounded-lg border border-[var(--color-line)] px-3 py-2" />
         <label class="mt-3 block text-sm font-medium" for="co-phone">{m.checkout_phone()}</label>
         <input id="co-phone" name="phone" type="tel" autocomplete="tel" value={v.phone ?? ''}

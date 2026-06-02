@@ -24,6 +24,16 @@ export const MEDUSA_ADMIN_EMAIL = process.env.MEDUSA_ADMIN_EMAIL ?? ''
 export const MEDUSA_ADMIN_PASSWORD = process.env.MEDUSA_ADMIN_PASSWORD ?? ''
 export const WORKER_URL = process.env.WORKER_URL ?? 'http://localhost:3002'
 
+// Inngest event dispatch. When enabled, lifecycle events (quiz.completed,
+// checkout.started, order.placed, newsletter.subscribed, marketing.unsubscribed)
+// are sent to Inngest, which drives the durable nurture/cart/post-purchase/
+// re-engagement sequences. Off in dev by default: order.placed then falls back to
+// the direct worker HTTP shim, and the time-based sequences simply don't run
+// (they need the Inngest dev server to verify). Set INNGEST_ENABLED=true with the
+// Inngest dev server (or INNGEST_EVENT_KEY in prod) to exercise them.
+export const INNGEST_ENABLED = process.env.INNGEST_ENABLED === 'true'
+export const INNGEST_EVENT_KEY = process.env.INNGEST_EVENT_KEY ?? ''
+
 // Analytics (loaded client-side only after analytics consent).
 export const UMAMI_SRC = process.env.PUBLIC_UMAMI_SRC ?? ''
 export const UMAMI_WEBSITE_ID = process.env.PUBLIC_UMAMI_WEBSITE_ID ?? ''

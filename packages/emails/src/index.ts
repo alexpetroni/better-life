@@ -2,8 +2,9 @@ import { render } from '@react-email/render'
 import * as React from 'react'
 import { ProfileEmail, type ProfileEmailProps } from './profile-email.js'
 import { OrderConfirmation, type OrderConfirmationProps } from './order-confirmation.js'
+import { NurtureEmail, type NurtureEmailProps } from './nurture-email.js'
 
-export type { ProfileEmailProps, OrderConfirmationProps }
+export type { ProfileEmailProps, OrderConfirmationProps, NurtureEmailProps }
 
 /**
  * Render the post-quiz profile email to HTML + plain text. All user-facing
@@ -24,6 +25,16 @@ export async function renderOrderConfirmationEmail(
   props: OrderConfirmationProps
 ): Promise<{ html: string; text: string }> {
   const element = React.createElement(OrderConfirmation, props)
+  const html = await render(element, { pretty: true })
+  const text = await render(element, { plainText: true })
+  return { html, text }
+}
+
+/** Render a marketing nurture email (profile nurture / cart / post-purchase / re-engagement). */
+export async function renderNurtureEmail(
+  props: NurtureEmailProps
+): Promise<{ html: string; text: string }> {
+  const element = React.createElement(NurtureEmail, props)
   const html = await render(element, { pretty: true })
   const text = await render(element, { plainText: true })
   return { html, text }

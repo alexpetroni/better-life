@@ -5,6 +5,7 @@ import { getPillar } from '$lib/server/pillars'
 import { submitQuiz, captureEmail } from '$lib/server/quiz'
 import { isEmail } from '$lib/server/validate'
 import { sendProfileEmail } from '$lib/server/email'
+import { emitQuizCompleted, stampLastSeen } from '$lib/server/events'
 import { CONSENT_VERSION } from '$lib/server/consent'
 import { SITE_URL } from '$lib/server/env'
 import * as m from '$lib/paraglide/messages'
@@ -64,7 +65,7 @@ export const actions: Actions = {
     if (!consentResults)
       return fail(400, { step: 'result', leadId, profileKey, email, error: 'consent' })
 
-    await captureEmail({
+    const captured = await captureEmail({
       leadId,
       email,
       consents: [
@@ -85,6 +86,12 @@ export const actions: Actions = {
       ],
       tags: consentMarketing ? ['marketing'] : [],
     })
+
+    await stampLastSeen(captured.leadId)
+    // Start the profile nurture sequence only for marketing-consented leads.
+    if (consentMarketing) {
+      await emitQuizCompleted({ leadId: captured.leadId, email, pillar: def.pillarSlug, profileKey })
+    }
 
     const pillar = await getPillar(def.pillarSlug, locale)
     const profile = def.profiles.find((p) => p.key === profileKey) ?? def.profiles[0]

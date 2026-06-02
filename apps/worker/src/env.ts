@@ -18,3 +18,5 @@ export const SAMEDAY_PASSWORD = process.env.SAMEDAY_PASSWORD ?? ''
 export const RESEND_API_KEY = process.env.RESEND_API_KEY ?? ''
 export const EMAIL_FROM = process.env.EMAIL_FROM ?? 'Somnium <hello@betterlife.ro>'
 export const PORT_WORKER = Number(process.env.PORT_WORKER ?? 3002)
+// Public site URL — used to build CTA + one-click unsubscribe links in marketing email.
+export const SITE_URL = process.env.PUBLIC_SITE_URL ?? 'http://localhost:5173'

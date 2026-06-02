@@ -18,11 +18,12 @@ function mockProviders(configured: boolean) {
   const transmit = vi.fn(async () => ({ status: 'sent' }))
   const createAwb = vi.fn(async () => ({ awb: 'AWB_TEST_1' }))
   const sendConfirmation = vi.fn(async () => {})
+  const sendMarketing = vi.fn(async () => {})
   const providers: Providers = {
     oblio: { isConfigured: () => configured, createInvoice },
     anaf: { isConfigured: () => configured, transmit },
     sameday: { isConfigured: () => configured, createAwb },
-    email: { isConfigured: () => configured, sendConfirmation },
+    email: { isConfigured: () => configured, sendConfirmation, sendMarketing },
   }
   return { providers, spies: { createInvoice, transmit, createAwb, sendConfirmation } }
 }

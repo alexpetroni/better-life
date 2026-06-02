@@ -10,7 +10,9 @@ import {
 } from '$lib/server/medusa'
 import { upsertCustomerByEmail } from '$lib/server/medusa-admin'
 import { promoteLeadToCustomer } from '$lib/server/identity'
-import { emitOrderPlaced } from '$lib/server/events'
+import { upsertLeadByEmail } from '$lib/server/leads'
+import { isEmail } from '$lib/server/validate'
+import { emitOrderPlaced, emitCheckoutStarted, stampLastSeen } from '$lib/server/events'
 
 export const load: PageServerLoad = async ({ cookies }) => {
   const cartId = cookies.get('bl_cart')
@@ -19,6 +21,26 @@ export const load: PageServerLoad = async ({ cookies }) => {
 }
 
 export const actions: Actions = {
+  // Fired (progressive enhancement) when the shopper enters their email at
+  // checkout, before completing. Arms abandoned-cart recovery: the worker waits
+  // for order.placed and nudges if it never arrives. No consent is recorded here
+  // — recovery still passes the marketing-consent gate, so a shopper with no
+  // marketing consent simply isn't nudged.
+  identify: async ({ request, cookies }) => {
+    const cartId = cookies.get('bl_cart')
+    if (!cartId) return { identified: false }
+    const email = String((await request.formData()).get('email') ?? '').trim()
+    if (!isEmail(email)) return { identified: false }
+    try {
+      const { id } = await upsertLeadByEmail(email)
+      await stampLastSeen(id)
+      await emitCheckoutStarted({ cartId, email, leadId: id })
+    } catch (err) {
+      console.warn('[checkout] identify failed:', (err as Error).message)
+    }
+    return { identified: true }
+  },
+
   place: async ({ request, cookies, locals }) => {
     const cartId = cookies.get('bl_cart')
     if (!cartId) return fail(400, { error: 'empty' })
@@ -66,7 +88,8 @@ export const actions: Actions = {
     }
 
     // 6. dispatch order.placed → worker runs the idempotent order effects
-    await emitOrderPlaced(order.id, 'somnium')
+    //    (email carried so nurture/cart sequences can match the purchase to a lead)
+    await emitOrderPlaced(order.id, 'somnium', order.email)
 
     // 7. clear the cart
     cookies.delete('bl_cart', { path: '/' })

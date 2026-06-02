@@ -1,5 +1,5 @@
 import { Resend } from 'resend'
-import { renderOrderConfirmationEmail } from '@better-life/emails'
+import { renderOrderConfirmationEmail, renderNurtureEmail, type NurtureEmailProps } from '@better-life/emails'
 import {
   OBLIO_EMAIL,
   OBLIO_SECRET,
@@ -40,6 +40,7 @@ export interface SamedayProvider {
 export interface EmailProvider {
   isConfigured(): boolean
   sendConfirmation(order: OrderInfo): Promise<void>
+  sendMarketing(opts: { to: string; subject: string; props: NurtureEmailProps }): Promise<void>
 }
 
 function formatRon(amount: number): string {
@@ -161,6 +162,12 @@ export const email: EmailProvider = {
       text,
     })
     if (error) throw new Error(`Resend confirmation failed: ${JSON.stringify(error)}`)
+  },
+  async sendMarketing({ to, subject, props }) {
+    const { html, text } = await renderNurtureEmail(props)
+    const resend = new Resend(RESEND_API_KEY)
+    const { error } = await resend.emails.send({ from: EMAIL_FROM, to, subject, html, text })
+    if (error) throw new Error(`Resend marketing failed: ${JSON.stringify(error)}`)
   },
 }
 
