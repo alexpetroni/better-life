@@ -1,5 +1,5 @@
-import type { Article, Pillar, QuizDefinition } from '@better-life/contracts'
-import { PAYLOAD_URL } from './env'
+import type { Article, Pillar, QuizDefinition, RelatedArticle } from '@better-life/contracts'
+import { PAYLOAD_URL, PAYLOAD_ADMIN_EMAIL, PAYLOAD_ADMIN_PASSWORD } from './env'
 import { renderLexical } from './lexical'
 
 // The SvelteKit BFF is the only caller of Payload. If the CMS is unreachable,
@@ -50,6 +50,14 @@ function mapPillar(doc: any): Pillar {
   }
 }
 
+function mapRelated(rel: unknown): RelatedArticle | null {
+  // Populated (depth>=1) related articles only; skip unresolved ids and drafts.
+  if (!rel || typeof rel !== 'object' || !('slug' in rel)) return null
+  const d = rel as any
+  if (d.status && d.status !== 'published') return null
+  return { slug: d.slug, title: d.title, excerpt: d.excerpt ?? undefined, pillarSlug: relSlug(d.pillar) }
+}
+
 function mapArticle(doc: any, withBody = false): Article {
   return {
     slug: doc.slug,
@@ -61,6 +69,12 @@ function mapArticle(doc: any, withBody = false): Article {
     author: doc.author ?? undefined,
     publishedAt: doc.publishedAt ?? undefined,
     profileTags: Array.isArray(doc.profileTags) ? doc.profileTags : undefined,
+    videoUrl: doc.videoUrl ?? undefined,
+    audioUrl: doc.audioUrl ?? undefined,
+    callout: doc.callout ?? undefined,
+    relatedArticles: Array.isArray(doc.relatedArticles)
+      ? (doc.relatedArticles.map(mapRelated).filter(Boolean) as RelatedArticle[])
+      : undefined,
     seo: doc.seo
       ? {
           metaTitle: doc.seo.metaTitle ?? undefined,
@@ -85,8 +99,9 @@ export async function getArticles(locale = 'ro'): Promise<Article[]> {
 }
 
 export async function getArticleBySlug(slug: string, locale = 'ro'): Promise<Article | null> {
+  // depth=2 so relatedArticles (and their pillar slug, for correct hrefs) populate.
   const data = await cmsFetch<{ docs: any[] }>(
-    `/articles?where[slug][equals]=${encodeURIComponent(slug)}&depth=1&limit=1`,
+    `/articles?where[slug][equals]=${encodeURIComponent(slug)}&depth=2&limit=1`,
     locale
   )
   const doc = data?.docs?.[0]
@@ -126,5 +141,91 @@ export async function getQuizBySlug(slug: string, locale = 'ro'): Promise<QuizDe
       ctaLabel: p.ctaLabel ?? undefined,
       ctaHref: p.ctaHref ?? undefined,
     })),
+  }
+}
+
+// ── Reviews (P3-4) ───────────────────────────────────────────────────────────
+// Public reads are anonymous (Payload returns approved-only via access control).
+// Writes require an authenticated Payload user, so the BFF logs in with a service
+// admin and caches the JWT. Verified-purchase + moderation rules are enforced by
+// the BFF (it only ever submits status='pending'); a missing credential degrades
+// gracefully (submission disabled, reads unaffected).
+
+export interface ReviewItem {
+  rating: number
+  title?: string
+  body: string
+  authorName?: string
+  createdAt: string
+}
+
+export interface ReviewSummary {
+  items: ReviewItem[]
+  count: number
+  /** Mean rating rounded to one decimal, or null when there are no reviews. */
+  average: number | null
+}
+
+let payloadToken: { value: string; at: number } | null = null
+async function payloadLogin(): Promise<string | null> {
+  if (!PAYLOAD_ADMIN_EMAIL || !PAYLOAD_ADMIN_PASSWORD) return null
+  if (payloadToken && Date.now() - payloadToken.at < 50 * 60 * 1000) return payloadToken.value
+  try {
+    const res = await fetch(`${PAYLOAD_URL}/api/users/login`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ email: PAYLOAD_ADMIN_EMAIL, password: PAYLOAD_ADMIN_PASSWORD }),
+    })
+    if (!res.ok) return null
+    const token = (await res.json()).token as string
+    payloadToken = { value: token, at: Date.now() }
+    return token
+  } catch {
+    return null
+  }
+}
+
+export async function listApprovedReviews(productHandle: string): Promise<ReviewSummary> {
+  const data = await cmsFetch<{ docs: any[] }>(
+    `/reviews?where[productHandle][equals]=${encodeURIComponent(productHandle)}` +
+      `&where[status][equals]=approved&sort=-createdAt&limit=100`
+  )
+  const items: ReviewItem[] = (data?.docs ?? []).map((d) => ({
+    rating: d.rating,
+    title: d.title ?? undefined,
+    body: d.body,
+    authorName: d.authorName ?? undefined,
+    createdAt: d.createdAt,
+  }))
+  const count = items.length
+  const average = count ? Math.round((items.reduce((s, r) => s + r.rating, 0) / count) * 10) / 10 : null
+  return { items, count, average }
+}
+
+/** Submit a review as `pending` (moderation). Returns false if the CMS write is unavailable. */
+export async function submitReview(input: {
+  productHandle: string
+  rating: number
+  title?: string
+  body: string
+  authorName?: string
+  email: string
+  pillar?: string
+}): Promise<boolean> {
+  const token = await payloadLogin()
+  if (!token) {
+    console.warn('[cms] no Payload admin credentials — review submission disabled (graceful degradation).')
+    return false
+  }
+  try {
+    const res = await fetch(`${PAYLOAD_URL}/api/reviews`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', authorization: `JWT ${token}` },
+      body: JSON.stringify({ ...input, pillar: input.pillar ?? 'somnium', status: 'pending' }),
+    })
+    return res.ok
+  } catch (err) {
+    console.warn('[cms] review submit failed:', (err as Error).message)
+    return false
   }
 }

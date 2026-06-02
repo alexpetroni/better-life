@@ -2,10 +2,19 @@
   import type { Article, Pillar } from '@better-life/contracts'
   import { page } from '$app/state'
   import * as m from '$lib/paraglide/messages'
-  import { formatDate } from '$lib/links'
+  import { formatDate, articleHref } from '$lib/links'
   import { getLocale } from '$lib/paraglide/runtime'
   import PillarBadge from './PillarBadge.svelte'
   import Disclaimer from './Disclaimer.svelte'
+
+  // Normalize a YouTube/Vimeo watch URL to its privacy-friendly embed form.
+  function toEmbed(url: string): string | null {
+    const yt = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([\w-]+)/)
+    if (yt) return `https://www.youtube-nocookie.com/embed/${yt[1]}`
+    const vm = url.match(/vimeo\.com\/(?:video\/)?(\d+)/)
+    if (vm) return `https://player.vimeo.com/video/${vm[1]}`
+    return null
+  }
 
   let {
     article,
@@ -20,6 +29,8 @@
   const accent = $derived(pillar?.accentColor ?? '#4f46e5')
   const origin = $derived(page.url.origin)
   const description = $derived(article.seo?.metaDescription ?? article.excerpt ?? '')
+  const embed = $derived(article.videoUrl ? toEmbed(article.videoUrl) : null)
+  const related = $derived(article.relatedArticles ?? [])
 
   const jsonLd = $derived(
     JSON.stringify([
@@ -93,12 +104,49 @@
   </header>
 
   {#if article.heroImageUrl}
-    <img src={article.heroImageUrl} alt="" class="mb-8 w-full rounded-xl" />
+    <img src={article.heroImageUrl} alt="" loading="lazy" class="mb-8 w-full rounded-xl" />
+  {/if}
+
+  {#if article.callout}
+    <aside class="mb-8 rounded-xl border-l-4 bg-[var(--color-surface)] p-5" style="border-color: {accent}">
+      <p class="leading-relaxed text-[var(--color-ink-soft)]">{article.callout}</p>
+    </aside>
   {/if}
 
   <div class="prose-body">
     {@html article.bodyHtml ?? ''}
   </div>
+
+  {#if embed}
+    <div class="mt-8 aspect-video w-full overflow-hidden rounded-xl">
+      <iframe
+        src={embed}
+        title={article.title}
+        class="h-full w-full"
+        loading="lazy"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowfullscreen
+      ></iframe>
+    </div>
+  {/if}
+
+  {#if article.audioUrl}
+    <audio controls preload="none" class="mt-8 w-full" src={article.audioUrl}></audio>
+  {/if}
+
+  {#if related.length}
+    <section class="mt-12 border-t border-[var(--color-line)] pt-6">
+      <h2 class="text-lg font-bold">{m.article_read_next()}</h2>
+      <ul class="mt-3 space-y-2">
+        {#each related as r (r.slug)}
+          <li>
+            <a class="font-semibold hover:underline" style="color: {accent}" href={articleHref(r)}>{r.title}</a>
+            {#if r.excerpt}<p class="text-sm text-[var(--color-muted)]">{r.excerpt}</p>{/if}
+          </li>
+        {/each}
+      </ul>
+    </section>
+  {/if}
 
   <div class="mt-10">
     <Disclaimer text={m.footer_disclaimer()} />

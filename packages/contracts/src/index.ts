@@ -50,7 +50,20 @@ export interface Article {
   publishedAt?: string;
   /** Tags used later for profile-matched recommendations. */
   profileTags?: string[];
+  /** Content-depth media (Phase 3): optional video/audio embed + a highlighted callout. */
+  videoUrl?: string;
+  audioUrl?: string;
+  callout?: string;
+  /** Internal linking — "Read next". */
+  relatedArticles?: RelatedArticle[];
   seo?: ArticleSeo;
+}
+
+export interface RelatedArticle {
+  slug: string;
+  title: string;
+  excerpt?: string;
+  pillarSlug: string;
 }
 
 // ── Quiz definitions (content authored in Payload; matching logic in code) ────

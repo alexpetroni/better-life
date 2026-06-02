@@ -1,9 +1,17 @@
 import { error, fail } from '@sveltejs/kit'
 import type { Actions, PageServerLoad } from './$types'
-import { getProduct, createCart, addToCart, getPurchasedHandles, listProducts } from '$lib/server/medusa'
+import {
+  getProduct,
+  createCart,
+  addToCart,
+  getPurchasedHandles,
+  listProducts,
+  getCustomerMe,
+} from '$lib/server/medusa'
 import { resolveViewer, getLeadProfile } from '$lib/server/me'
 import { rankByProfile, matchesProfile } from '$lib/server/recommendations'
 import { addWishlist, removeWishlist, isWishlisted, recordProductView } from '$lib/server/wishlist'
+import { listApprovedReviews, submitReview } from '$lib/server/cms'
 
 export const load: PageServerLoad = async ({ params, cookies, locals }) => {
   const product = await getProduct(params.handle)
@@ -25,7 +33,8 @@ export const load: PageServerLoad = async ({ params, cookies, locals }) => {
   }
 
   const purchased = viewer.customerToken ? await getPurchasedHandles(viewer.customerToken) : []
-  const crossSell = rankByProfile(await listProducts(), profileKey, {
+  const [crossSellPool, reviews] = await Promise.all([listProducts(), listApprovedReviews(product.handle)])
+  const crossSell = rankByProfile(crossSellPool, profileKey, {
     excludeHandles: [product.handle, ...purchased],
     limit: 3,
   })
@@ -36,6 +45,9 @@ export const load: PageServerLoad = async ({ params, cookies, locals }) => {
     crossSell,
     canSave: !!viewer.leadId,
     saved,
+    reviews,
+    // Verified-purchase gate (locked decision): only logged-in buyers may review.
+    canReview: !!viewer.customerToken && purchased.includes(product.handle),
   }
 }
 
@@ -67,5 +79,34 @@ export const actions: Actions = {
     if (remove) await removeWishlist(viewer.leadId, params.handle)
     else await addWishlist(viewer.leadId, params.handle)
     return { saved: !remove }
+  },
+
+  // Submit a review. Re-checks the verified-purchase gate server-side, then writes
+  // it as `pending` for moderation. Never trusts the client's canReview flag.
+  review: async ({ request, cookies, locals, params }) => {
+    const viewer = await resolveViewer(cookies, locals.claimToken)
+    if (!viewer.customerToken) return fail(401, { reviewError: 'auth' })
+    const purchased = await getPurchasedHandles(viewer.customerToken)
+    if (!purchased.includes(params.handle)) return fail(403, { reviewError: 'not_verified' })
+
+    const f = await request.formData()
+    const rating = Number(f.get('rating') ?? 0)
+    const body = String(f.get('body') ?? '').trim()
+    const title = String(f.get('title') ?? '').trim()
+    const authorName = String(f.get('authorName') ?? '').trim()
+    if (!(rating >= 1 && rating <= 5) || !body) return fail(400, { reviewError: 'fields' })
+
+    const me = await getCustomerMe(viewer.customerToken)
+    const ok = await submitReview({
+      productHandle: params.handle,
+      rating,
+      title: title || undefined,
+      body,
+      authorName: authorName || undefined,
+      email: me?.email ?? '',
+      pillar: 'somnium',
+    })
+    if (!ok) return fail(500, { reviewError: 'submit' })
+    return { reviewSubmitted: true }
   },
 }

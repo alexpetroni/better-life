@@ -12,6 +12,11 @@ loadEnv({ path: path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../.
 
 export const DATABASE_URL = process.env.DATABASE_URL ?? ''
 export const PAYLOAD_URL = process.env.PAYLOAD_PUBLIC_SERVER_URL ?? 'http://localhost:3001'
+// Service login the BFF uses to WRITE to Payload (review submission). Reads stay
+// anonymous. Defaults match the dev seed admin so reviews work out of the box;
+// set real credentials in production. Absent → review submission degrades off.
+export const PAYLOAD_ADMIN_EMAIL = process.env.PAYLOAD_ADMIN_EMAIL ?? process.env.SEED_ADMIN_EMAIL ?? 'admin@betterlife.ro'
+export const PAYLOAD_ADMIN_PASSWORD = process.env.PAYLOAD_ADMIN_PASSWORD ?? process.env.SEED_ADMIN_PASSWORD ?? 'changeme123'
 export const RESEND_API_KEY = process.env.RESEND_API_KEY ?? ''
 export const EMAIL_FROM = process.env.EMAIL_FROM ?? 'Better Life <hello@betterlife.ro>'
 export const SITE_URL = process.env.PUBLIC_SITE_URL ?? 'http://localhost:5173'
@@ -37,3 +42,7 @@ export const INNGEST_EVENT_KEY = process.env.INNGEST_EVENT_KEY ?? ''
 // Analytics (loaded client-side only after analytics consent).
 export const UMAMI_SRC = process.env.PUBLIC_UMAMI_SRC ?? ''
 export const UMAMI_WEBSITE_ID = process.env.PUBLIC_UMAMI_WEBSITE_ID ?? ''
+
+// Google Search Console verification token → <meta name="google-site-verification">.
+// Connect the real GSC property when a live domain exists.
+export const GSC_VERIFICATION = process.env.PUBLIC_GSC_VERIFICATION ?? ''
