@@ -1,6 +1,13 @@
 # Better Life · Phase 3 Plan — Personalization and Depth
 
-**Status:** design for review. No feature code yet. Stop point before implementation.
+**Status:** ✅ COMPLETE — all items implemented and merged to `master`. Shipped across
+four chunks: P3-1 `64cf6d2` (schema + reviews collection + content fields),
+P3-2 `fd7a4db` (Inngest nurture orchestration + lifecycle events), P3-3 `e76aab7`
+(recommendations + dashboard + cross-sell + wishlist), P3-4 `effbdaf` (reviews UI +
+moderation + content depth + SEO). Item 14 (A/B) skipped per locked decision.
+Verified end-to-end against the live stack (Medusa/Payload/web/worker + an Inngest
+dev runtime) on 2026-06-02 — see §5. Remaining work is environmental only: real
+elapsed-time delays, live email sends (`RESEND_API_KEY`), and CWV/GSC on a live domain.
 
 Deepens Somnium (no new pillars): profile-driven nurture orchestration, customer
 dashboard, recommendations, wishlist, moderated reviews, cross-sell, richer
@@ -21,34 +28,35 @@ workflow map, (3) app-schema deltas, (4) decisions needed.
 
 ## 1. Build-order plan (dependencies)
 
-1. **Schema deltas + events foundation** (§3) — wishlist, product_views,
-   `leads.last_seen_at`, marketing-unsubscribe token; Payload `reviews` collection;
-   article media/related-articles fields. *Everything below depends on this.*
-2. **Lifecycle events** — emit `quiz.completed`, `checkout.started`, `order.placed`
-   (exists), `newsletter.subscribed`, and `marketing.unsubscribed` from the BFF;
-   stamp `last_seen_at`. *Depends on 1.*
-3. **Marketing-consent gate** — a worker helper: a lead is mailable only if its
-   latest `marketing` consent is `granted` and not unsubscribed. Transactional mail
-   bypasses this. *Depends on 1–2.*
-4. **Profile nurture sequences** (Inngest) — branch on `profile_key`. *Depends on 2–3.*
-5. **Abandoned-cart recovery** (Inngest) — `checkout.started` → wait-for `order.placed`.
-   *Depends on 2–3.*
-6. **Post-purchase education** (Inngest) — `order.placed` → profile + products bought.
-   *Depends on 2–3, recommendations (8) for product picks.*
-7. **Dashboard** — profile, orders, addresses, retake screening. *Depends on 1 (link)
-   + Medusa customer.*
-8. **Recommendations engine** — rule-based: product↔profile tags + purchase-history
-   exclusion. *Depends on 1 (product profile tags) + quiz profile.*
-9. **Cross-sell** (cart + post-purchase) + **profile-matched "why"** on product pages —
-   identified leads/customers only. *Depends on 8.*
-10. **Wishlist / save-for-later** — identified only. *Depends on 1.*
-11. **Reviews + moderation** — Payload collection + storefront submit/display.
-    *Depends on 1; independent of orchestration.*
-12. **Content depth** — article media embeds (callout/video/audio) + internal linking.
-    *Depends on 1 (Payload fields).*
-13. **SEO/CWV** — Search Console verification, structured-data iteration, Core Web
-    Vitals fixes. *Independent; needs a live domain.*
-14. **Stretch: A/B** — quiz CTA + one product-copy variant. *Last, optional.*
+1. ✅ **Schema deltas + events foundation** (§3) — wishlist, product_views,
+   `leads.last_seen_at`, marketing-unsubscribe token (`0003`); Payload `reviews`
+   collection; article media/related-articles fields. *(P3-1)*
+2. ✅ **Lifecycle events** — BFF emits `quiz.completed`, `checkout.started`,
+   `order.placed`+email, `newsletter.subscribed`, `marketing.unsubscribed` via a
+   gated Inngest client (`INNGEST_ENABLED`); stamps `last_seen_at`. *(P3-2)*
+3. ✅ **Marketing-consent gate** — worker `isMailable`: latest `marketing` consent
+   must be `granted` (unsubscribe writes a revoke row). Transactional mail bypasses. *(P3-2)*
+4. ✅ **Profile nurture sequences** (Inngest) — `profile-nurture`, branches on
+   `profileKey`; +1d/+3d/+7d with purchase-cancel via `waitForEvent`. *(P3-2)*
+5. ✅ **Abandoned-cart recovery** (Inngest) — `abandoned-cart`: `checkout.started`
+   → waitForEvent `order.placed` (1h) → reminder, +24h second nudge. *(P3-2)*
+6. ✅ **Post-purchase education** (Inngest) — `post-purchase-education`: `order.placed`
+   → +1d education (products bought) + +7d review request. *(P3-2)*
+7. ✅ **Dashboard** — profile summary, orders, addresses, retake-screening + wishlist
+   links, profile-matched recommendations. *(P3-3)*
+8. ✅ **Recommendations engine** — rule-based `rankByProfile`: product↔profile tags
+   (`metadata.profiles` seed) + purchase-history exclusion; unit-tested. *(P3-3)*
+9. ✅ **Cross-sell** (product page + cart) + **profile-matched "why"** on product
+   pages — identified leads/customers only. *(P3-3)*
+10. ✅ **Wishlist / save-for-later** — identified only; `/wishlist` route + save
+    toggle + product-view tracking. *(P3-3)*
+11. ✅ **Reviews + moderation** — Payload collection + storefront submit/display;
+    verified-purchase gate + moderate-all; BFF service-login writes `pending`. *(P3-4)*
+12. ✅ **Content depth** — article callout box + video/audio embeds + "Read next"
+    internal linking, in the shared `ArticleView`. *(P3-4)*
+13. ✅ **SEO** — GSC verification meta (`PUBLIC_GSC_VERIFICATION`), Article/Breadcrumb
+    + Product `aggregateRating` JSON-LD, lazy media. *CWV measurement needs a live domain.* *(P3-4)*
+14. ⏭️ **Stretch: A/B** — **SKIPPED** per locked decision (§4).
 
 ---
 
@@ -143,3 +151,29 @@ data (quiz profile, Medusa orders/addresses) — no new tables.
 - Unsubscribe: one-click link in marketing emails → records a `marketing` consent
   revoke via `unsubscribe_token`.
 - New copy stays Romanian-only (English i18n is out of scope this phase).
+
+*All defaults above were implemented as stated.*
+
+---
+
+## 5. Verification (2026-06-02, end-to-end against the live stack)
+
+Checked against running Medusa/Payload/web/worker plus an Inngest dev runtime.
+Unit tests: worker 10/10 (incl. nurture gate/idempotency), web 8/8 (incl. `rankByProfile`).
+
+- **Recommendations:** re-ran the Medusa seed → all 6 SKUs carry `metadata.profiles`;
+  product page renders the cross-sell strip.
+- **Reviews:** submitted a `pending` review → hidden from anon API + storefront;
+  approved → surfaced on both with `din 5` aggregate + `aggregateRating` JSON-LD;
+  deleted → reverted. Verified-purchase gate enforced server-side.
+- **Content depth:** populated an article → callout, YouTube-nocookie embed, `<audio>`,
+  and "Read next" related links all rendered; reverted.
+- **SEO:** Article + BreadcrumbList + Product JSON-LD present; `aggregateRating` only
+  with approved reviews; GSC meta correctly conditional on the env var.
+- **Inngest:** all 5 functions register (valid triggers + daily cron); `quiz.completed`
+  spawned a `profile-nurture` run (waiting on its purchase-cancel `waitForEvent`);
+  `order.placed` fanned out to `order-effects` (graceful skip) + `post-purchase-education`,
+  and its matching email cancelled the in-flight nurture run — purchase-cancel confirmed.
+
+**Environmental-only remaining:** real elapsed-time delays (1d/3d/7d/24h), live email
+sends (no `RESEND_API_KEY`), CWV + real GSC on a live domain.
