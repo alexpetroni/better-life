@@ -58,5 +58,64 @@ export const Pillars: CollectionConfig = {
         { name: 'ctaHref', type: 'text' },
       ],
     },
+    {
+      // Composable landing (Phase 4). A small, fixed block set — the landing
+      // page renders `hero` then these in order. New types are added deliberately.
+      name: 'landingBlocks',
+      type: 'blocks',
+      labels: { singular: 'Landing block', plural: 'Landing blocks' },
+      admin: { description: 'Compose the pillar landing page below the hero.' },
+      blocks: [
+        {
+          slug: 'richText',
+          labels: { singular: 'Rich text', plural: 'Rich text' },
+          fields: [{ name: 'content', type: 'richText', localized: true }],
+        },
+        {
+          slug: 'articleList',
+          labels: { singular: 'Article list', plural: 'Article lists' },
+          fields: [
+            { name: 'heading', type: 'text', localized: true },
+            {
+              name: 'source',
+              type: 'select',
+              required: true,
+              defaultValue: 'pillar',
+              options: [
+                { label: 'This pillar', value: 'pillar' },
+                { label: 'By profile tag', value: 'tag' },
+              ],
+            },
+            { name: 'tag', type: 'text', admin: { description: 'profileTag, used when source = "By profile tag".' } },
+            { name: 'limit', type: 'number', required: true, defaultValue: 3 },
+          ],
+        },
+        {
+          slug: 'quizCta',
+          labels: { singular: 'Quiz CTA', plural: 'Quiz CTAs' },
+          fields: [
+            { name: 'heading', type: 'text', localized: true },
+            { name: 'body', type: 'textarea', localized: true },
+            { name: 'ctaLabel', type: 'text', localized: true },
+          ],
+        },
+        {
+          slug: 'stat',
+          labels: { singular: 'Stat', plural: 'Stats' },
+          fields: [
+            { name: 'value', type: 'text', required: true },
+            { name: 'label', type: 'text', localized: true },
+          ],
+        },
+        {
+          slug: 'quote',
+          labels: { singular: 'Quote', plural: 'Quotes' },
+          fields: [
+            { name: 'text', type: 'textarea', required: true, localized: true },
+            { name: 'attribution', type: 'text' },
+          ],
+        },
+      ],
+    },
   ],
 }

@@ -10,6 +10,7 @@ import { Pillars } from './collections/Pillars'
 import { Articles } from './collections/Articles'
 import { Quizzes } from './collections/Quizzes'
 import { Reviews } from './collections/Reviews'
+import { Homepage } from './globals/Homepage'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -28,6 +29,7 @@ export default buildConfig({
     },
   },
   collections: [Users, Pillars, Articles, Quizzes, Reviews],
+  globals: [Homepage],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || 'dev-secret-change-me',
   typescript: {

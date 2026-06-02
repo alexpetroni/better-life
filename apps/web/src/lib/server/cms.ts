@@ -1,4 +1,11 @@
-import type { Article, Pillar, QuizDefinition, RelatedArticle } from '@better-life/contracts'
+import type {
+  Article,
+  Pillar,
+  PillarLandingBlock,
+  HomepageConfig,
+  QuizDefinition,
+  RelatedArticle,
+} from '@better-life/contracts'
 import { PAYLOAD_URL, PAYLOAD_ADMIN_EMAIL, PAYLOAD_ADMIN_PASSWORD } from './env'
 import { renderLexical } from './lexical'
 
@@ -27,6 +34,29 @@ function relSlug(rel: unknown): string {
   return ''
 }
 
+function mapLandingBlock(b: any): PillarLandingBlock | null {
+  switch (b?.blockType) {
+    case 'richText':
+      return { type: 'richText', html: renderLexical(b.content) }
+    case 'articleList':
+      return {
+        type: 'articleList',
+        heading: b.heading ?? undefined,
+        source: b.source === 'tag' ? 'tag' : 'pillar',
+        tag: b.tag ?? undefined,
+        limit: typeof b.limit === 'number' ? b.limit : 3,
+      }
+    case 'quizCta':
+      return { type: 'quizCta', heading: b.heading ?? undefined, body: b.body ?? undefined, ctaLabel: b.ctaLabel ?? undefined }
+    case 'stat':
+      return { type: 'stat', value: b.value, label: b.label ?? undefined }
+    case 'quote':
+      return { type: 'quote', text: b.text, attribution: b.attribution ?? undefined }
+    default:
+      return null
+  }
+}
+
 function mapPillar(doc: any): Pillar {
   return {
     slug: doc.slug,
@@ -46,6 +76,9 @@ function mapPillar(doc: any): Pillar {
           ctaLabel: doc.hero.ctaLabel ?? undefined,
           ctaHref: doc.hero.ctaHref ?? undefined,
         }
+      : undefined,
+    landingBlocks: Array.isArray(doc.landingBlocks)
+      ? (doc.landingBlocks.map(mapLandingBlock).filter(Boolean) as PillarLandingBlock[])
       : undefined,
   }
 }
@@ -88,6 +121,26 @@ function mapArticle(doc: any, withBody = false): Article {
 export async function getPillars(locale = 'ro'): Promise<Pillar[]> {
   const data = await cmsFetch<{ docs: any[] }>('/pillars?limit=100&depth=1&sort=order', locale)
   return (data?.docs ?? []).map(mapPillar)
+}
+
+/**
+ * Editor-curated homepage feed (Payload `homepage` global). Resolves relationships
+ * to plain slugs/handles; every slot may be empty, in which case the homepage
+ * loader applies its rule-based fallback. Degrades to all-empty if the CMS is down.
+ */
+export async function getHomepage(locale = 'ro'): Promise<HomepageConfig> {
+  const doc = await cmsFetch<any>('/globals/homepage?depth=1', locale)
+  const featured = Array.isArray(doc?.featuredArticles) ? doc.featuredArticles : []
+  return {
+    featuredArticleSlugs: featured
+      .map((a: unknown) => (a && typeof a === 'object' && 'slug' in a ? (a as { slug: string }).slug : null))
+      .filter(Boolean) as string[],
+    featuredProductHandle: doc?.featuredProductHandle || null,
+    quizInvitationPillarSlug:
+      doc?.quizInvitationPillar && typeof doc.quizInvitationPillar === 'object'
+        ? (doc.quizInvitationPillar.slug ?? null)
+        : null,
+  }
 }
 
 export async function getArticles(locale = 'ro'): Promise<Article[]> {

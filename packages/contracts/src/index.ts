@@ -24,6 +24,30 @@ export interface Pillar {
   /** Slug of the quiz this pillar surfaces, if any. */
   quizSlug?: string | null;
   hero?: PillarHero;
+  /** Composable landing sections (Phase 4) — rendered after the hero. */
+  landingBlocks?: PillarLandingBlock[];
+}
+
+// ── Composable pillar landing blocks (Phase 4) ───────────────────────────────
+// A small, fixed set of section types the CMS can compose a landing from. New
+// types are added deliberately, not via generic machinery.
+export type PillarLandingBlock =
+  | { type: 'richText'; html: string }
+  | { type: 'articleList'; heading?: string; source: 'pillar' | 'tag'; tag?: string; limit: number }
+  | { type: 'quizCta'; heading?: string; body?: string; ctaLabel?: string }
+  | { type: 'stat'; value: string; label?: string }
+  | { type: 'quote'; text: string; attribution?: string };
+
+// ── Editor-curated homepage feed (Phase 4) ───────────────────────────────────
+// The portal homepage reads this; any empty slot falls back to the rule-based
+// default (latest from live pillars / first live pillar with a quiz).
+export interface HomepageConfig {
+  /** Curated featured articles, in order. Empty → rule-based "latest from live pillars". */
+  featuredArticleSlugs: string[];
+  /** A Somnium SKU to feature; empty → no product slot. */
+  featuredProductHandle?: string | null;
+  /** Pillar slug whose quiz the invitation points to; empty → first live pillar with a quiz. */
+  quizInvitationPillarSlug?: string | null;
 }
 
 /** A pillar surfaces publicly (nav, landing, feed) only when live. */
