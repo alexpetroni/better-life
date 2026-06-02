@@ -18,6 +18,19 @@ if (process.env.STRIPE_API_KEY) {
     },
   })
 }
+// Custom Netopia provider — registered only when configured (graceful: absent →
+// method simply not offered; the manual/system provider remains the fallback).
+if (process.env.NETOPIA_SIGNATURE) {
+  paymentProviders.push({
+    resolve: './src/modules/netopia',
+    id: 'netopia',
+    options: {
+      signature: process.env.NETOPIA_SIGNATURE,
+      posSignature: process.env.NETOPIA_PUBLIC_KEY,
+      sandbox: process.env.NETOPIA_SANDBOX !== 'false',
+    },
+  })
+}
 
 const modules: Record<string, unknown>[] = []
 if (paymentProviders.length > 0) {
