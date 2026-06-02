@@ -161,5 +161,23 @@
   "account_have_account": "Already have an account?",
   "account_need_account": "No account yet?",
   "account_error": "Incorrect details. Try again.",
-  "account_register_error": "The account could not be created. The email may already be in use."
+  "account_register_error": "The account could not be created. The email may already be in use.",
+
+  "cookie_title": "We respect your privacy",
+  "cookie_body": "We use necessary cookies to run the site and, with your consent, analytics and marketing cookies.",
+  "cookie_accept_all": "Accept all",
+  "cookie_necessary_only": "Necessary only",
+  "cookie_save": "Save preferences",
+  "cookie_settings": "Settings",
+  "cookie_cat_necessary": "Necessary (always on)",
+  "cookie_cat_analytics": "Analytics",
+  "cookie_cat_marketing": "Marketing",
+
+  "footer_legal": "Legal",
+  "legal_terms": "Terms & conditions",
+  "legal_privacy": "Privacy policy",
+  "legal_returns": "Returns policy",
+  "legal_shipping": "Shipping",
+  "legal_contact": "Contact",
+  "legal_anpc": "ANPC / ODR"
 }

@@ -7,11 +7,30 @@
 
   let { data, form }: { data: PageData; form: ActionData } = $props()
   let submitting = $state(false)
+
+  const jsonLd = $derived(
+    JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'Product',
+      name: data.product.title,
+      description: data.product.description ?? data.product.title,
+      offers: {
+        '@type': 'Offer',
+        price: data.product.amount ?? undefined,
+        priceCurrency: (data.product.currency ?? 'ron').toUpperCase(),
+        availability: 'https://schema.org/InStock',
+      },
+    })
+  )
 </script>
 
 <svelte:head>
   <title>{data.product.title} · {m.brand_somnium()}</title>
   <meta name="description" content={data.product.description ?? data.product.title} />
+  <meta property="og:type" content="product" />
+  <meta property="og:title" content={data.product.title} />
+  <meta property="og:description" content={data.product.description ?? data.product.title} />
+  {@html `<script type="application/ld+json">${jsonLd}</script>`}
 </svelte:head>
 
 <section class="mx-auto max-w-2xl px-4 py-12">

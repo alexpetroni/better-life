@@ -1,0 +1,34 @@
+# Brand / domain mapping at the edge (CLAUDE.md): which brand or domain maps to
+# which route group is a routing rule here, not a rebuild. The SvelteKit app
+# serves the portal at the root and Somnium under /somnium; this proxy lets
+# Somnium also resolve as a standalone domain.
+#
+# Dev (apps run on the host): `docker compose --profile proxy up caddy`, then add
+#   127.0.0.1 betterlife.localhost somnium.localhost
+# to /etc/hosts. Prod: replace host.docker.internal with the service names and
+# use real domains (somnium.ro, betterlife.ro) — Caddy handles TLS automatically.
+
+{
+	auto_https off
+	admin off
+}
+
+# ── Better Life portal (Somnium also reachable natively under /somnium) ───────
+betterlife.localhost:80, betterlife.ro {
+	reverse_proxy host.docker.internal:5173
+}
+
+# ── Somnium as a standalone brand/domain ──────────────────────────────────────
+# The apex maps to the Somnium landing; shared routes (screening, cart, account,
+# checkout) pass through unchanged. Reverse-decoupling: Somnium never needs the
+# portal to function.
+somnium.localhost:80, somnium.ro {
+	@apex path /
+	rewrite @apex /somnium
+	reverse_proxy host.docker.internal:5173
+}
+
+# ── Medusa admin (internal) ───────────────────────────────────────────────────
+admin.betterlife.localhost:80 {
+	reverse_proxy host.docker.internal:9000
+}

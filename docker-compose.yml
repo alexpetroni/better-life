@@ -1,5 +1,6 @@
-# Local parity for the Phase 1 stack. One Postgres (Supabase stand-in, same engine)
-# and one Redis. Phase 2 adds Medusa, Payload, and the worker as services here.
+# Local parity. One Postgres (Supabase stand-in, same engine) and one Redis.
+# Redis gains consumers in Phase 2 (Medusa modules + the worker). The optional
+# `proxy` profile adds the Caddy reverse proxy for brand/domain routing.
 services:
   postgres:
     image: postgres:16-alpine
@@ -32,6 +33,20 @@ services:
       interval: 5s
       timeout: 5s
       retries: 12
+
+  # Brand/domain routing (somnium.ro ↔ betterlife.ro/somnium). Optional in dev:
+  #   docker compose --profile proxy up caddy
+  caddy:
+    image: caddy:2-alpine
+    container_name: better-life-caddy
+    profiles: ["proxy"]
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
 volumes:
   pgdata:

@@ -1,10 +1,11 @@
 import { SITE_URL } from '$lib/server/env'
 import { loadPillars } from '$lib/server/pillars'
 import { getArticles } from '$lib/server/cms'
+import { listProducts } from '$lib/server/medusa'
 import { articleHref, pillarHref } from '$lib/links'
 
 export async function GET() {
-  const [pillars, articles] = await Promise.all([loadPillars(), getArticles()])
+  const [pillars, articles, products] = await Promise.all([loadPillars(), getArticles(), listProducts()])
   const live = pillars.filter((p) => p.status === 'live')
 
   const paths = [
@@ -13,8 +14,10 @@ export async function GET() {
     '/newsletter',
     '/how-it-works',
     '/screening',
+    '/somnium/shop',
     ...live.map(pillarHref),
     ...articles.map((a) => articleHref(a)),
+    ...products.map((p) => `/somnium/shop/${p.handle}`),
   ]
   const unique = [...new Set(paths)]
 

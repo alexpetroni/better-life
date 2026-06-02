@@ -161,5 +161,23 @@
   "account_have_account": "Ai deja cont?",
   "account_need_account": "Nu ai cont?",
   "account_error": "Date incorecte. Încearcă din nou.",
-  "account_register_error": "Contul nu a putut fi creat. Poate emailul e deja folosit."
+  "account_register_error": "Contul nu a putut fi creat. Poate emailul e deja folosit.",
+
+  "cookie_title": "Respectăm intimitatea ta",
+  "cookie_body": "Folosim cookie-uri necesare pentru funcționarea site-ului și, cu acordul tău, cookie-uri de analiză și marketing.",
+  "cookie_accept_all": "Acceptă toate",
+  "cookie_necessary_only": "Doar necesare",
+  "cookie_save": "Salvează preferințele",
+  "cookie_settings": "Setări",
+  "cookie_cat_necessary": "Necesare (mereu active)",
+  "cookie_cat_analytics": "Analiză",
+  "cookie_cat_marketing": "Marketing",
+
+  "footer_legal": "Informații legale",
+  "legal_terms": "Termeni și condiții",
+  "legal_privacy": "Politica de confidențialitate",
+  "legal_returns": "Politica de retur",
+  "legal_shipping": "Livrare",
+  "legal_contact": "Contact",
+  "legal_anpc": "ANPC / SOL"
 }

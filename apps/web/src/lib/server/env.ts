@@ -23,3 +23,7 @@ export const MEDUSA_PUBLISHABLE_KEY = process.env.MEDUSA_PUBLISHABLE_KEY ?? ''
 export const MEDUSA_ADMIN_EMAIL = process.env.MEDUSA_ADMIN_EMAIL ?? ''
 export const MEDUSA_ADMIN_PASSWORD = process.env.MEDUSA_ADMIN_PASSWORD ?? ''
 export const WORKER_URL = process.env.WORKER_URL ?? 'http://localhost:3002'
+
+// Analytics (loaded client-side only after analytics consent).
+export const UMAMI_SRC = process.env.PUBLIC_UMAMI_SRC ?? ''
+export const UMAMI_WEBSITE_ID = process.env.PUBLIC_UMAMI_WEBSITE_ID ?? ''
