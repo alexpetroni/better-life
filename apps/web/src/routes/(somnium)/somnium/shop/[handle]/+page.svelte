@@ -4,9 +4,13 @@
   import * as m from '$lib/paraglide/messages'
   import { formatPrice } from '$lib/links'
   import { getLocale } from '$lib/paraglide/runtime'
+  import RecommendationStrip from '$lib/components/RecommendationStrip.svelte'
 
   let { data, form }: { data: PageData; form: ActionData } = $props()
   let submitting = $state(false)
+
+  // Wishlist toggle state: seed from the server, then follow action results.
+  let saved = $derived((form as any)?.saved ?? data.saved)
 
   const jsonLd = $derived(
     JSON.stringify({
@@ -44,6 +48,13 @@
     <p class="mt-4 leading-relaxed text-[var(--color-ink-soft)]">{data.product.description}</p>
   {/if}
 
+  {#if data.why}
+    <div class="mt-6 rounded-xl border border-[var(--color-line)] bg-[var(--color-surface)] p-5">
+      <p class="text-sm font-bold" style="color: var(--color-accent)">{m.product_why_title()}</p>
+      <p class="mt-1 text-sm text-[var(--color-ink-soft)]">{m.product_why_body()}</p>
+    </div>
+  {/if}
+
   {#if form?.added}
     <p role="status" class="mt-6 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-green-800">
       {m.added_to_cart()} — <a class="font-semibold underline" href="/cart">{m.cart_view()}</a>
@@ -72,4 +83,15 @@
       </button>
     </form>
   {/if}
+
+  {#if data.canSave}
+    <form method="POST" action="?/save" class="mt-3" use:enhance={() => ({ update }) => update({ reset: false })}>
+      <input type="hidden" name="remove" value={saved ? 'true' : 'false'} />
+      <button type="submit" class="text-sm font-semibold underline" style="color: var(--color-accent)">
+        {saved ? m.wishlist_saved() : m.wishlist_save()}
+      </button>
+    </form>
+  {/if}
+
+  <RecommendationStrip heading={m.recommend_crosssell()} products={data.crossSell} />
 </section>

@@ -8,6 +8,7 @@ import {
   createShippingOptionsWorkflow,
   createShippingProfilesWorkflow,
   createStockLocationsWorkflow,
+  updateProductsWorkflow,
   linkSalesChannelsToApiKeyWorkflow,
   linkSalesChannelsToStockLocationWorkflow,
   createServiceZonesWorkflow,
@@ -177,13 +178,16 @@ export default async function seed({ container }: ExecArgs) {
 
   // ── Products (Somnium demo SKUs, pillar-tagged) ───────────────────────────--
   // Prices are in RON major units (Medusa v2 stores decimal amounts, not bani).
+  // `profiles` tags each SKU with the somnium-sleep quiz profiles it suits
+  // (hyperarousal | tension | behavioral | conditioned) — drives P3-3
+  // recommendations + the product-page "why this fits you" note.
   const products = [
-    { title: 'Supliment Somneo — melatonină & plante', handle: 'somneo-supliment', category: 'Greu de adormit', price: 79, desc: 'Formulă cu melatonină și plante calmante, pentru o adormire mai ușoară.' },
-    { title: 'Mască de somn premium', handle: 'masca-de-somn', category: 'Somn neodihnitor', price: 49, desc: 'Întuneric total, materiale moi — pentru un somn mai profund.' },
-    { title: 'Ceai de seară — relaxare', handle: 'ceai-de-seara', category: 'Greu de adormit', price: 35, desc: 'Amestec de plante pentru ritualul de seară, fără cofeină.' },
-    { title: 'Dopuri de urechi pentru somn', handle: 'dopuri-urechi', category: 'Treziri nocturne', price: 29, desc: 'Reduc zgomotul nocturn fără disconfort.' },
-    { title: 'Lampă de trezire — răsărit simulat', handle: 'lampa-trezire', category: 'Ritm dat peste cap', price: 199, desc: 'Simulează răsăritul pentru o trezire mai naturală și un ritm circadian stabil.' },
-    { title: 'Magneziu glicinat — somn & relaxare', handle: 'magneziu-glicinat', category: 'Somn neodihnitor', price: 59, desc: 'Magneziu ușor asimilabil, pentru relaxare musculară și nervoasă.' },
+    { title: 'Supliment Somneo — melatonină & plante', handle: 'somneo-supliment', category: 'Greu de adormit', price: 79, desc: 'Formulă cu melatonină și plante calmante, pentru o adormire mai ușoară.', profiles: ['hyperarousal', 'conditioned'] },
+    { title: 'Mască de somn premium', handle: 'masca-de-somn', category: 'Somn neodihnitor', price: 49, desc: 'Întuneric total, materiale moi — pentru un somn mai profund.', profiles: ['tension', 'conditioned'] },
+    { title: 'Ceai de seară — relaxare', handle: 'ceai-de-seara', category: 'Greu de adormit', price: 35, desc: 'Amestec de plante pentru ritualul de seară, fără cofeină.', profiles: ['hyperarousal', 'tension'] },
+    { title: 'Dopuri de urechi pentru somn', handle: 'dopuri-urechi', category: 'Treziri nocturne', price: 29, desc: 'Reduc zgomotul nocturn fără disconfort.', profiles: ['conditioned', 'behavioral'] },
+    { title: 'Lampă de trezire — răsărit simulat', handle: 'lampa-trezire', category: 'Ritm dat peste cap', price: 199, desc: 'Simulează răsăritul pentru o trezire mai naturală și un ritm circadian stabil.', profiles: ['behavioral'] },
+    { title: 'Magneziu glicinat — somn & relaxare', handle: 'magneziu-glicinat', category: 'Somn neodihnitor', price: 59, desc: 'Magneziu ușor asimilabil, pentru relaxare musculară și nervoasă.', profiles: ['tension', 'hyperarousal'] },
   ]
   // Products must be linked to a shipping profile, or checkout fails with
   // "items require shipping profiles not satisfied by the shipping methods".
@@ -205,7 +209,7 @@ export default async function seed({ container }: ExecArgs) {
           category_ids: catByName.get(p.category) ? [catByName.get(p.category) as string] : [],
           sales_channels: [{ id: salesChannel.id }],
           shipping_profile_id: shippingProfileId,
-          metadata: { pillar: 'somnium' },
+          metadata: { pillar: 'somnium', profiles: p.profiles },
           options: [{ title: 'Variantă', values: ['Standard'] }],
           variants: [
             {
@@ -235,6 +239,23 @@ export default async function seed({ container }: ExecArgs) {
     if (levels.length) {
       await createInventoryLevelsWorkflow(container).run({ input: { inventory_levels: levels } }).catch(() => {})
     }
+  }
+
+  // Refresh profile tags on ALL listed products (idempotent — covers SKUs seeded
+  // before P3-3 added `metadata.profiles`, which the create branch above skips).
+  const { data: allProducts } = await query.graph({ entity: 'product', fields: ['id', 'handle', 'metadata'] })
+  const productById = new Map(allProducts.map((p: any) => [p.handle, p]))
+  const tagUpdates = products
+    .map((p) => {
+      const existing = productById.get(p.handle)
+      return existing
+        ? { id: existing.id, metadata: { ...(existing.metadata ?? {}), pillar: 'somnium', profiles: p.profiles } }
+        : null
+    })
+    .filter(Boolean) as { id: string; metadata: Record<string, unknown> }[]
+  if (tagUpdates.length) {
+    await updateProductsWorkflow(container).run({ input: { products: tagUpdates } })
+    logger.info(`  ↻ profile tags refreshed on ${tagUpdates.length} product(s)`)
   }
 
   logger.info('✔ Catalog seed complete')

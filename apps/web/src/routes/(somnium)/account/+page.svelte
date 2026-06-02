@@ -4,6 +4,7 @@
   import * as m from '$lib/paraglide/messages'
   import { formatPrice, formatDate } from '$lib/links'
   import { getLocale } from '$lib/paraglide/runtime'
+  import RecommendationStrip from '$lib/components/RecommendationStrip.svelte'
 
   let { data, form }: { data: PageData; form: ActionData } = $props()
 </script>
@@ -18,6 +19,20 @@
     <h1 class="text-3xl font-extrabold tracking-tight">{m.account_title()}</h1>
     <p class="mt-2 text-[var(--color-ink-soft)]">{m.account_welcome({ email: data.customer.email })}</p>
 
+    <!-- Sleep profile -->
+    <div class="mt-8 rounded-xl border border-[var(--color-line)] bg-[var(--color-surface)] p-5">
+      <h2 class="text-sm font-semibold uppercase tracking-wide text-[var(--color-muted)]">{m.account_profile()}</h2>
+      {#if data.profile}
+        <p class="mt-2 text-lg font-bold" style="color: var(--color-accent)">{data.profile.title}</p>
+      {:else}
+        <p class="mt-2 text-sm text-[var(--color-ink-soft)]">{m.account_profile_none()}</p>
+      {/if}
+      <div class="mt-3 flex flex-wrap gap-4 text-sm font-semibold">
+        <a href="/screening" style="color: var(--color-accent)">{m.account_retake()}</a>
+        <a href="/wishlist" style="color: var(--color-accent)">{m.wishlist_title()} ({data.wishlistCount})</a>
+      </div>
+    </div>
+
     <h2 class="mt-8 text-xl font-bold">{m.account_orders()}</h2>
     {#if data.orders.length}
       <ul class="mt-3 divide-y divide-[var(--color-line)]">
@@ -31,6 +46,22 @@
     {:else}
       <p class="mt-3 text-[var(--color-muted)]">{m.account_no_orders()}</p>
     {/if}
+
+    <h2 class="mt-8 text-xl font-bold">{m.account_addresses()}</h2>
+    {#if data.addresses.length}
+      <ul class="mt-3 divide-y divide-[var(--color-line)]">
+        {#each data.addresses as a (a.id)}
+          <li class="py-3 text-sm">
+            <span class="font-semibold">{a.first_name ?? ''} {a.last_name ?? ''}</span>
+            <span class="text-[var(--color-ink-soft)]"> — {a.address_1 ?? ''}{a.city ? `, ${a.city}` : ''}{a.postal_code ? `, ${a.postal_code}` : ''}</span>
+          </li>
+        {/each}
+      </ul>
+    {:else}
+      <p class="mt-3 text-[var(--color-muted)]">{m.account_no_addresses()}</p>
+    {/if}
+
+    <RecommendationStrip heading={m.recommend_for_you()} products={data.recommendations} />
 
     <form method="POST" action="?/logout" use:enhance class="mt-8">
       <button class="rounded-lg border border-[var(--color-line)] px-5 py-2 font-semibold">{m.account_logout()}</button>

@@ -13,6 +13,8 @@ export interface StoreProduct {
   variantId: string
   amount: number | null
   currency: string
+  /** Sleep profiles this product suits (from Medusa metadata.profiles) — drives recommendations. */
+  profiles: string[]
 }
 
 export interface StoreCategory {
@@ -79,10 +81,11 @@ function mapProduct(p: any): StoreProduct {
     variantId: variant?.id ?? '',
     amount: price?.calculated_amount ?? null,
     currency: price?.currency_code ?? 'ron',
+    profiles: Array.isArray(p.metadata?.profiles) ? (p.metadata.profiles as string[]) : [],
   }
 }
 
-const PRODUCT_FIELDS = 'fields=id,title,handle,description,thumbnail,*variants.calculated_price'
+const PRODUCT_FIELDS = 'fields=id,title,handle,description,thumbnail,metadata,*variants.calculated_price'
 
 export async function listProducts(opts: { categoryId?: string; q?: string } = {}): Promise<StoreProduct[]> {
   const regionId = await getRegionId()
@@ -261,9 +264,33 @@ export async function registerCustomer(
   }
 }
 
-export async function getCustomerMe(token: string): Promise<{ id: string; email: string } | null> {
-  const data = await storeAuthedFetch<{ customer: any }>('/store/customers/me', token)
-  return data?.customer ? { id: data.customer.id, email: data.customer.email } : null
+export interface CustomerAddress {
+  id: string
+  first_name?: string
+  last_name?: string
+  address_1?: string
+  city?: string
+  postal_code?: string
+  phone?: string
+}
+
+export interface CustomerMe {
+  id: string
+  email: string
+  addresses: CustomerAddress[]
+}
+
+export async function getCustomerMe(token: string): Promise<CustomerMe | null> {
+  const data = await storeAuthedFetch<{ customer: any }>(
+    '/store/customers/me?fields=id,email,*addresses',
+    token
+  )
+  if (!data?.customer) return null
+  return {
+    id: data.customer.id,
+    email: data.customer.email,
+    addresses: Array.isArray(data.customer.addresses) ? data.customer.addresses : [],
+  }
 }
 
 export async function listCustomerOrders(token: string): Promise<any[]> {
@@ -272,4 +299,20 @@ export async function listCustomerOrders(token: string): Promise<any[]> {
     token
   )
   return data?.orders ?? []
+}
+
+/** Product handles the customer has already bought — excluded from recommendations. */
+export async function getPurchasedHandles(token: string): Promise<string[]> {
+  const data = await storeAuthedFetch<{ orders: any[] }>(
+    '/store/orders?limit=50&fields=items.product_handle,items.variant.product.handle',
+    token
+  )
+  const handles = new Set<string>()
+  for (const o of data?.orders ?? []) {
+    for (const it of o.items ?? []) {
+      const h = it.product_handle ?? it.variant?.product?.handle
+      if (h) handles.add(h)
+    }
+  }
+  return [...handles]
 }

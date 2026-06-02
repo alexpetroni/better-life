@@ -5,22 +5,53 @@ import {
   loginCustomer,
   getCustomerMe,
   listCustomerOrders,
+  getPurchasedHandles,
+  listProducts,
 } from '$lib/server/medusa'
-import { promoteLeadToCustomer } from '$lib/server/identity'
+import { promoteLeadToCustomer, findLeadByCustomerId } from '$lib/server/identity'
+import { getLeadProfile } from '$lib/server/me'
+import { rankByProfile } from '$lib/server/recommendations'
+import { listWishlistHandles } from '$lib/server/wishlist'
+import { getQuizBySlug } from '$lib/server/cms'
 import { isEmail } from '$lib/server/validate'
 
 const COOKIE = 'bl_session'
+const QUIZ_SLUG = 'somnium-sleep'
 
-export const load: PageServerLoad = async ({ cookies }) => {
+const EMPTY = { customer: null, orders: [], profile: null, addresses: [], recommendations: [], wishlistCount: 0 }
+
+export const load: PageServerLoad = async ({ cookies, locals }) => {
   const token = cookies.get(COOKIE)
-  if (!token) return { customer: null, orders: [] }
+  if (!token) return EMPTY
   const customer = await getCustomerMe(token)
   if (!customer) {
     cookies.delete(COOKIE, { path: '/' })
-    return { customer: null, orders: [] }
+    return EMPTY
   }
   const orders = await listCustomerOrders(token)
-  return { customer, orders }
+
+  // Personalization: profile summary, profile-matched recommendations (excluding
+  // already-purchased), and a wishlist count. All best-effort.
+  const lead = await findLeadByCustomerId(customer.id)
+  let profile: { key: string; title: string } | null = null
+  let recommendations: Awaited<ReturnType<typeof listProducts>> = []
+  let wishlistCount = 0
+  if (lead) {
+    const lp = await getLeadProfile(lead.id)
+    if (lp) {
+      const def = await getQuizBySlug(QUIZ_SLUG, locals.locale ?? 'ro')
+      const p = def?.profiles.find((x) => x.key === lp.profileKey)
+      profile = { key: lp.profileKey, title: p?.title ?? lp.profileKey }
+    }
+    const purchased = await getPurchasedHandles(token)
+    recommendations = rankByProfile(await listProducts(), profile?.key ?? null, {
+      excludeHandles: purchased,
+      limit: 3,
+    })
+    wishlistCount = (await listWishlistHandles(lead.id)).length
+  }
+
+  return { customer, orders, profile, addresses: customer.addresses, recommendations, wishlistCount }
 }
 
 export const actions: Actions = {

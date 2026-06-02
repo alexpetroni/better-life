@@ -4,6 +4,7 @@
   import * as m from '$lib/paraglide/messages'
   import { formatPrice } from '$lib/links'
   import { getLocale } from '$lib/paraglide/runtime'
+  import RecommendationStrip from '$lib/components/RecommendationStrip.svelte'
 
   let { data }: { data: PageData } = $props()
   const items = $derived(data.cart?.items ?? [])
@@ -76,5 +77,7 @@
         {m.continue_shopping()}
       </a>
     </div>
+
+    <RecommendationStrip heading={m.recommend_crosssell()} products={data.crossSell} />
   {/if}
 </section>
