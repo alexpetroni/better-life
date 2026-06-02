@@ -71,6 +71,7 @@ export interface Config {
     pillars: Pillar;
     articles: Article;
     quizzes: Quiz;
+    reviews: Review;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -82,6 +83,7 @@ export interface Config {
     pillars: PillarsSelect<false> | PillarsSelect<true>;
     articles: ArticlesSelect<false> | ArticlesSelect<true>;
     quizzes: QuizzesSelect<false> | QuizzesSelect<true>;
+    reviews: ReviewsSelect<false> | ReviewsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -281,11 +283,47 @@ export interface Article {
     };
     [k: string]: unknown;
   } | null;
+  /**
+   * Optional embed URL (YouTube/Vimeo).
+   */
+  videoUrl?: string | null;
+  /**
+   * Optional audio URL (e.g. a guided wind-down).
+   */
+  audioUrl?: string | null;
+  /**
+   * Highlighted callout box.
+   */
+  callout?: string | null;
+  /**
+   * Internal linking — shown as “Read next”.
+   */
+  relatedArticles?: (number | Article)[] | null;
   seo?: {
     metaTitle?: string | null;
     metaDescription?: string | null;
     ogImageUrl?: string | null;
   };
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "reviews".
+ */
+export interface Review {
+  id: number;
+  productHandle: string;
+  rating: number;
+  title?: string | null;
+  body: string;
+  authorName?: string | null;
+  /**
+   * Buyer email (verified-purchase match); not shown publicly.
+   */
+  email?: string | null;
+  pillar?: string | null;
+  status: 'pending' | 'approved' | 'rejected';
   updatedAt: string;
   createdAt: string;
 }
@@ -328,6 +366,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'quizzes';
         value: number | Quiz;
+      } | null)
+    | ({
+        relationTo: 'reviews';
+        value: number | Review;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -436,6 +478,10 @@ export interface ArticlesSelect<T extends boolean = true> {
   publishedAt?: T;
   profileTags?: T;
   body?: T;
+  videoUrl?: T;
+  audioUrl?: T;
+  callout?: T;
+  relatedArticles?: T;
   seo?:
     | T
     | {
@@ -493,6 +539,22 @@ export interface QuizzesSelect<T extends boolean = true> {
         ctaHref?: T;
         id?: T;
       };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "reviews_select".
+ */
+export interface ReviewsSelect<T extends boolean = true> {
+  productHandle?: T;
+  rating?: T;
+  title?: T;
+  body?: T;
+  authorName?: T;
+  email?: T;
+  pillar?: T;
+  status?: T;
   updatedAt?: T;
   createdAt?: T;
 }

@@ -44,6 +44,25 @@ export const Articles: CollectionConfig = {
       admin: { description: 'Tags for profile-matched recommendations (e.g. "hyperarousal").' },
     },
     { name: 'body', type: 'richText', localized: true },
+    // Phase 3 content depth: media embeds + internal linking.
+    {
+      name: 'videoUrl',
+      type: 'text',
+      admin: { description: 'Optional embed URL (YouTube/Vimeo).' },
+    },
+    {
+      name: 'audioUrl',
+      type: 'text',
+      admin: { description: 'Optional audio URL (e.g. a guided wind-down).' },
+    },
+    { name: 'callout', type: 'textarea', localized: true, admin: { description: 'Highlighted callout box.' } },
+    {
+      name: 'relatedArticles',
+      type: 'relationship',
+      relationTo: 'articles',
+      hasMany: true,
+      admin: { description: 'Internal linking — shown as “Read next”.' },
+    },
     {
       name: 'seo',
       type: 'group',
