@@ -61,6 +61,16 @@ export async function captureEmail(opts: {
     if (existing.rows.length > 0 && existing.rows[0].id !== leadId) {
       const target = existing.rows[0].id
       await client.query('update app.quiz_responses set lead_id = $1 where lead_id = $2', [target, leadId])
+      // Carry the anonymous lead's behavioral tags (e.g. quiz:<pillar>, profile:<key>
+      // from the other pillar) onto the survivor before dropping it — so a
+      // cross-pillar lead keeps both pillars' tags, not just its quiz responses.
+      await client.query(
+        `update app.leads t
+            set behavioral_tags = (select array(select distinct unnest(t.behavioral_tags || m.behavioral_tags)))
+           from app.leads m
+          where t.id = $1 and m.id = $2`,
+        [target, leadId]
+      )
       await client.query('delete from app.leads where id = $1', [leadId])
       leadId = target
     } else {
