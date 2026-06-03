@@ -135,10 +135,21 @@ describe('findReengageableLeads', () => {
 })
 
 describe('profileNurtureContent', () => {
-  it('branches the +1d tip on the profile key', async () => {
-    const hyper = profileNurtureContent('nurture_tip', 'hyperarousal')
-    const generic = profileNurtureContent('nurture_tip', null)
+  it('branches the +1d tip on the profile key', () => {
+    const hyper = profileNurtureContent('somnium', 'nurture_tip', 'hyperarousal')
+    const generic = profileNurtureContent('somnium', 'nurture_tip', null)
     expect(hyper.paragraphs[0]).not.toEqual(generic.paragraphs[0])
-    expect(profileNurtureContent('nurture_product', null).cta?.path).toBe('/somnium/shop')
+    expect(profileNurtureContent('somnium', 'nurture_product', null).cta?.path).toBe('/somnium/shop')
+  })
+
+  it('is pillar-aware: Better Body uses body tips + content CTA (no shop)', () => {
+    const body = profileNurtureContent('better-body', 'nurture_tip', 'sedentary')
+    const sleep = profileNurtureContent('somnium', 'nurture_tip', 'sedentary')
+    expect(body.paragraphs[0]).not.toEqual(sleep.paragraphs[0]) // distinct copy per pillar
+    expect(profileNurtureContent('better-body', 'nurture_product', null).cta?.path).toBe('/pillars/better-body')
+  })
+
+  it('falls back to the somnium sequence for an unknown pillar', () => {
+    expect(profileNurtureContent('mystery', 'nurture_product', null).cta?.path).toBe('/somnium/shop')
   })
 })

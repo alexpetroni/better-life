@@ -24,12 +24,15 @@ export async function emitOrderPlaced(orderId: string, pillar = 'somnium', email
   }
 }
 
-/** quiz.completed — starts the profile nurture sequence. */
+/** quiz.completed — starts the profile nurture sequence. Carries the pillar's
+ *  brand + accent (CMS spine config) so the worker doesn't hardcode pillar copy. */
 export async function emitQuizCompleted(opts: {
   leadId: string
   email: string
   pillar: string
   profileKey: string
+  brand: string
+  accent: string
 }): Promise<void> {
   await sendEvent({ name: 'quiz.completed', data: opts })
 }

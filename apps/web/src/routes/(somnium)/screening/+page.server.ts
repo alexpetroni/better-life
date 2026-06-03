@@ -84,16 +84,23 @@ export const actions: Actions = {
           locale,
         },
       ],
-      tags: consentMarketing ? ['marketing'] : [],
+      tags: consentMarketing ? ['marketing', `interest:${def.pillarSlug}`] : [`interest:${def.pillarSlug}`],
     })
 
     await stampLastSeen(captured.leadId)
+    const pillar = await getPillar(def.pillarSlug, locale)
     // Start the profile nurture sequence only for marketing-consented leads.
     if (consentMarketing) {
-      await emitQuizCompleted({ leadId: captured.leadId, email, pillar: def.pillarSlug, profileKey })
+      await emitQuizCompleted({
+        leadId: captured.leadId,
+        email,
+        pillar: def.pillarSlug,
+        profileKey,
+        brand: pillar?.name ?? 'Somnium',
+        accent: pillar?.accentColor ?? '#4f46e5',
+      })
     }
 
-    const pillar = await getPillar(def.pillarSlug, locale)
     const profile = def.profiles.find((p) => p.key === profileKey) ?? def.profiles[0]
     let sent = false
     if (profile) {

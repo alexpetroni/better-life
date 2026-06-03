@@ -99,7 +99,14 @@ export const actions: Actions = {
 
     await stampLastSeen(captured.leadId)
     if (consentMarketing) {
-      await emitQuizCompleted({ leadId: captured.leadId, email, pillar: params.slug, profileKey })
+      await emitQuizCompleted({
+        leadId: captured.leadId,
+        email,
+        pillar: params.slug,
+        profileKey,
+        brand: pillar.name,
+        accent: pillar.accentColor ?? '#4f46e5',
+      })
     }
 
     const profile = def.profiles.find((p) => p.key === profileKey) ?? def.profiles[0]

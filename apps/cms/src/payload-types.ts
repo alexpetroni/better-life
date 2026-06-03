@@ -93,8 +93,12 @@ export interface Config {
     defaultIDType: number;
   };
   fallbackLocale: ('false' | 'none' | 'null') | false | null | ('ro' | 'en') | ('ro' | 'en')[];
-  globals: {};
-  globalsSelect: {};
+  globals: {
+    homepage: Homepage;
+  };
+  globalsSelect: {
+    homepage: HomepageSelect<false> | HomepageSelect<true>;
+  };
   locale: 'ro' | 'en';
   widgets: {
     collections: CollectionsWidget;
@@ -187,6 +191,67 @@ export interface Pillar {
     ctaLabel?: string | null;
     ctaHref?: string | null;
   };
+  /**
+   * Compose the pillar landing page below the hero.
+   */
+  landingBlocks?:
+    | (
+        | {
+            content?: {
+              root: {
+                type: string;
+                children: {
+                  type: any;
+                  version: number;
+                  [k: string]: unknown;
+                }[];
+                direction: ('ltr' | 'rtl') | null;
+                format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+                indent: number;
+                version: number;
+              };
+              [k: string]: unknown;
+            } | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'richText';
+          }
+        | {
+            heading?: string | null;
+            source: 'pillar' | 'tag';
+            /**
+             * profileTag, used when source = "By profile tag".
+             */
+            tag?: string | null;
+            limit: number;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'articleList';
+          }
+        | {
+            heading?: string | null;
+            body?: string | null;
+            ctaLabel?: string | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'quizCta';
+          }
+        | {
+            value: string;
+            label?: string | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'stat';
+          }
+        | {
+            text: string;
+            attribution?: string | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'quote';
+          }
+      )[]
+    | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -460,6 +525,52 @@ export interface PillarsSelect<T extends boolean = true> {
         ctaLabel?: T;
         ctaHref?: T;
       };
+  landingBlocks?:
+    | T
+    | {
+        richText?:
+          | T
+          | {
+              content?: T;
+              id?: T;
+              blockName?: T;
+            };
+        articleList?:
+          | T
+          | {
+              heading?: T;
+              source?: T;
+              tag?: T;
+              limit?: T;
+              id?: T;
+              blockName?: T;
+            };
+        quizCta?:
+          | T
+          | {
+              heading?: T;
+              body?: T;
+              ctaLabel?: T;
+              id?: T;
+              blockName?: T;
+            };
+        stat?:
+          | T
+          | {
+              value?: T;
+              label?: T;
+              id?: T;
+              blockName?: T;
+            };
+        quote?:
+          | T
+          | {
+              text?: T;
+              attribution?: T;
+              id?: T;
+              blockName?: T;
+            };
+      };
   updatedAt?: T;
   createdAt?: T;
 }
@@ -597,6 +708,41 @@ export interface PayloadMigrationsSelect<T extends boolean = true> {
   batch?: T;
   updatedAt?: T;
   createdAt?: T;
+}
+/**
+ * Recompose the homepage feed. Empty slots fall back to sensible defaults.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "homepage".
+ */
+export interface Homepage {
+  id: number;
+  /**
+   * Curated, in order. Empty → latest published from live pillars.
+   */
+  featuredArticles?: (number | Article)[] | null;
+  /**
+   * A Somnium product handle to feature, e.g. "somneo-supliment". Empty → no product slot.
+   */
+  featuredProductHandle?: string | null;
+  /**
+   * Pillar whose quiz the invitation points to. Empty → first live pillar with a quiz.
+   */
+  quizInvitationPillar?: (number | null) | Pillar;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "homepage_select".
+ */
+export interface HomepageSelect<T extends boolean = true> {
+  featuredArticles?: T;
+  featuredProductHandle?: T;
+  quizInvitationPillar?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

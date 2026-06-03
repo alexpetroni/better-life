@@ -6,9 +6,17 @@
 export const BRAND = 'Somnium'
 export const ACCENT = '#4F46E5'
 
-// Profile-matched line for the +1d nurture tip. Keys mirror the somnium-sleep
-// quiz profiles; UNKNOWN falls back to the generic line.
-const PROFILE_TIPS: Record<string, string> = {
+export interface NurtureStep {
+  heading: string
+  paragraphs: string[]
+  cta?: { label: string; path: string }
+}
+
+// +1d profile tips, keyed by pillar then quiz profile. Unknown profile → the
+// pillar's generic line. Brand/accent are NOT here — they're spine config,
+// passed in via the quiz.completed event, so pillar names/colors are never
+// hardcoded in worker code.
+const SOMNIUM_TIPS: Record<string, string> = {
   hyperarousal:
     'Mintea ta pare să rămână „pornită” seara. Încearcă 10 minute de respirație lentă (4 secunde inspir, 6 expir) cu o oră înainte de culcare — semnalează corpului că ziua s-a încheiat.',
   tension:
@@ -19,37 +27,82 @@ const PROFILE_TIPS: Record<string, string> = {
     'Dacă patul a devenit locul în care „te lupți” cu somnul, folosește-l doar pentru somn. Dacă nu adormi în 20 de minute, ridică-te și revino când simți din nou somnul.',
 }
 
+const BODY_TIPS: Record<string, string> = {
+  sedentary:
+    'Pune-ți un memento la fiecare oră: ridică-te și mișcă-te 2–3 minute. Mișcarea scurtă și frecventă repornește energia mai bine decât o singură ședință lungă.',
+  depleted:
+    'La următoarea masă, adaugă proteine și fibre. Țin energia stabilă ore în șir și previn căderea de după-amiază mai bine decât o cafea în plus.',
+  overreached:
+    'Planifică zile de odihnă la fel de serios ca antrenamentele. Corpul se întărește în pauze, nu în efort.',
+  inconsistent:
+    'Alege o doză pe care o poți repeta chiar și într-o zi proastă: 15 minute, nu 90. Leag-o de un obicei pe care îl ai deja.',
+}
+
+// Per-pillar profile-nurture sequence (+1d tip → +3d profile-matched → +7d
+// re-engagement). A no-shop pillar's +3d step points to content, not products.
+export const profileNurture: Record<
+  string,
+  { tip: (profileKey: string | null) => NurtureStep; next: () => NurtureStep; reengage: () => NurtureStep }
+> = {
+  somnium: {
+    tip: (profileKey) => ({
+      heading: 'Un prim pas pentru un somn mai bun',
+      paragraphs: [
+        (profileKey && SOMNIUM_TIPS[profileKey]) ||
+          'Cel mai simplu început: o oră de culcare constantă. Corpul tău învață ritmul și adormi mai ușor în câteva zile.',
+        'Mâine îți trimitem câteva detalii despre cum se leagă asta de rezultatul tău.',
+      ],
+    }),
+    next: () => ({
+      heading: 'Sprijin potrivit profilului tău',
+      paragraphs: [
+        'Pe baza rezultatului testului tău, am pregătit o selecție de produse Somnium care susțin exact tiparul tău de somn.',
+        'Descoperă-le în magazin și alege ce ți se potrivește.',
+      ],
+      cta: { label: 'Vezi recomandările', path: '/somnium/shop' },
+    }),
+    reengage: () => ({
+      heading: 'Cum a mers până acum?',
+      paragraphs: [
+        'Au trecut câteva zile de la testul tău. Schimbările mici, repetate, fac diferența — iar noi suntem aici cu resurse pentru fiecare pas.',
+        'Reia testul oricând vrei să-ți actualizezi profilul.',
+      ],
+      cta: { label: 'Reia testul', path: '/screening' },
+    }),
+  },
+  'better-body': {
+    tip: (profileKey) => ({
+      heading: 'Un prim pas pentru mai multă energie',
+      paragraphs: [
+        (profileKey && BODY_TIPS[profileKey]) ||
+          'Cel mai simplu început: puțină mișcare în fiecare zi, la aceeași oră. Corpul răspunde la repetiție, nu la eroism.',
+        'Mâine îți trimitem câteva resurse legate de rezultatul tău.',
+      ],
+    }),
+    next: () => ({
+      heading: 'Conținut pe măsura profilului tău',
+      paragraphs: [
+        'Pe baza rezultatului testului tău, am ales câteva articole Better Body care răspund exact tiparului tău de energie și mișcare.',
+        'Începe cu unul — un singur pas aplicat azi contează mai mult decât un plan perfect.',
+      ],
+      cta: { label: 'Vezi articolele Better Body', path: '/pillars/better-body' },
+    }),
+    reengage: () => ({
+      heading: 'Cum a mers până acum?',
+      paragraphs: [
+        'Au trecut câteva zile de la testul tău. Pașii mici, repetați, fac diferența — iar noi suntem aici cu resurse pentru fiecare etapă.',
+        'Reia testul oricând vrei să-ți actualizezi profilul.',
+      ],
+      cta: { label: 'Reia testul', path: '/pillars/better-body/screening' },
+    }),
+  },
+}
+
 export const copy = {
   greeting: 'Salut,',
   unsubscribeLabel: 'Dezabonează-te de la aceste emailuri',
-  footer: 'Primești acest email pentru că ți-ai exprimat acordul pentru comunicări Somnium.',
-
-  // ── A. Profile nurture ──────────────────────────────────────────────────--
-  nurtureTip: (profileKey: string | null) => ({
-    heading: 'Un prim pas pentru un somn mai bun',
-    paragraphs: [
-      profileKey && PROFILE_TIPS[profileKey]
-        ? PROFILE_TIPS[profileKey]
-        : 'Cel mai simplu început: o oră de culcare constantă. Corpul tău învață ritmul și adormi mai ușor în câteva zile.',
-      'Mâine îți trimitem câteva detalii despre cum se leagă asta de rezultatul tău.',
-    ],
-  }),
-  nurtureProduct: () => ({
-    heading: 'Sprijin potrivit profilului tău',
-    paragraphs: [
-      'Pe baza rezultatului testului tău, am pregătit o selecție de produse Somnium care susțin exact tiparul tău de somn.',
-      'Descoperă-le în magazin și alege ce ți se potrivește.',
-    ],
-    cta: { label: 'Vezi recomandările', path: '/somnium/shop' },
-  }),
-  nurtureReengage: () => ({
-    heading: 'Cum a mers până acum?',
-    paragraphs: [
-      'Au trecut câteva zile de la testul tău. Schimbările mici, repetate, fac diferența — iar noi suntem aici cu resurse pentru fiecare pas.',
-      'Reia testul oricând vrei să-ți actualizezi profilul.',
-    ],
-    cta: { label: 'Reia testul', path: '/screening' },
-  }),
+  footer: (brand: string) =>
+    `Primești acest email pentru că ți-ai exprimat acordul pentru comunicări ${brand}.`,
 
   // ── B. Abandoned cart ───────────────────────────────────────────────────--
   cartRecovery1: () => ({

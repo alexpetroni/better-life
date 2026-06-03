@@ -7,7 +7,15 @@ import {
 import { getOrderInfo } from './medusa'
 import { defaultProviders, type Providers } from './providers'
 import { SITE_URL } from './env'
-import { ACCENT, BRAND, copy } from './nurture-copy'
+import { ACCENT, BRAND, copy, profileNurture } from './nurture-copy'
+
+/** Pillar branding (name + accent) — passed in from the quiz.completed event so
+ *  pillar names/colors live in the CMS spine, never hardcoded in the worker. */
+export interface Branding {
+  brand: string
+  accent: string
+}
+const DEFAULT_BRANDING: Branding = { brand: BRAND, accent: ACCENT }
 
 // Marketing nurture sends. Every send passes through ONE gated, idempotent path
 // (sendMarketingEmail): it checks the marketing-consent gate, skips gracefully
@@ -38,7 +46,8 @@ export async function sendMarketingEmail(
   leadId: string,
   kind: string,
   content: NurtureContent,
-  providers: Providers = defaultProviders
+  providers: Providers = defaultProviders,
+  branding: Branding = DEFAULT_BRANDING
 ): Promise<SendResult> {
   const lead = await getLeadForEmail(leadId)
   if (!lead?.email) return { kind, status: 'skipped', reason: 'no_email' }
@@ -52,13 +61,13 @@ export async function sendMarketingEmail(
     to: lead.email,
     subject: content.heading,
     props: {
-      brand: BRAND,
-      accentColor: ACCENT,
+      brand: branding.brand,
+      accentColor: branding.accent,
       heading: content.heading,
       greeting: copy.greeting,
       paragraphs: content.paragraphs,
       cta: content.cta ? { label: content.cta.label, url: SITE_URL + content.cta.path } : undefined,
-      footer: copy.footer,
+      footer: copy.footer(branding.brand),
       unsubscribeLabel: copy.unsubscribeLabel,
       unsubscribeUrl: `${SITE_URL}/unsubscribe?token=${lead.unsubscribe_token}`,
     },
@@ -69,15 +78,20 @@ export async function sendMarketingEmail(
 
 // ── Sequence-step builders (called from one step.run each in inngest.ts) ──────
 
-/** A. Profile nurture — one step keyed by `kind`, branching copy on profileKey. */
-export function profileNurtureContent(kind: string, profileKey: string | null): NurtureContent {
+/** A. Profile nurture — one step keyed by `kind`, branching copy on pillar + profileKey. */
+export function profileNurtureContent(
+  pillar: string,
+  kind: string,
+  profileKey: string | null
+): NurtureContent {
+  const p = profileNurture[pillar] ?? profileNurture.somnium
   switch (kind) {
     case 'nurture_tip':
-      return copy.nurtureTip(profileKey)
+      return p.tip(profileKey)
     case 'nurture_product':
-      return copy.nurtureProduct()
+      return p.next()
     default:
-      return copy.nurtureReengage()
+      return p.reengage()
   }
 }
 

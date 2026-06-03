@@ -45,7 +45,21 @@ export const profileNurture = inngest.createFunction(
     cancelOn: [{ event: 'marketing.unsubscribed', match: 'data.leadId' }],
   },
   async ({ event, step }) => {
-    const { leadId, profileKey = null } = event.data as { leadId: string; profileKey?: string | null }
+    const {
+      leadId,
+      profileKey = null,
+      pillar = 'somnium',
+      brand,
+      accent,
+    } = event.data as {
+      leadId: string
+      profileKey?: string | null
+      pillar?: string
+      brand?: string
+      accent?: string
+    }
+    // Pillar branding comes from the event (CMS spine), not hardcoded here.
+    const branding = { brand: brand || 'Somnium', accent: accent || '#4F46E5' }
     const sequence = [
       { kind: 'nurture_tip', delay: '1d' },
       { kind: 'nurture_product', delay: '2d' }, // +3d cumulative
@@ -59,7 +73,7 @@ export const profileNurture = inngest.createFunction(
       })
       if (purchased) return { stopped: 'purchased', after: s.kind }
       const res = await step.run(`send-${s.kind}`, () =>
-        sendMarketingEmail(leadId, s.kind, profileNurtureContent(s.kind, profileKey))
+        sendMarketingEmail(leadId, s.kind, profileNurtureContent(pillar, s.kind, profileKey), defaultProviders, branding)
       )
       if (res.status === 'skipped' && res.reason === 'not_mailable')
         return { stopped: 'not_mailable', after: s.kind }
