@@ -1,6 +1,9 @@
 # Better Life · Phase 4 Plan — Second Pillar and Demo Polish
 
-**Status:** ✅ approved (2026-06-02) — decisions locked in §8. Ready to implement in the §2 build order.
+**Status:** ✅ COMPLETE — all 10 build-order steps implemented and merged to `master`, then
+verified end-to-end against the live stack (2026-06-03). See the Verification section. Remaining work is
+runtime/manual only: axe/Lighthouse a11y audit, Core Web Vitals, real-device mobile,
+and pointing `PUBLIC_UMAMI_SRC` at a live Umami instance.
 
 Phase 4 goal: a demo-ready functional prototype that proves the architecture, not
 Somnium-in-a-box. A second pillar goes genuinely live (content + landing + quiz, **no
@@ -207,3 +210,32 @@ A stakeholder demo shows, in one session, without manual intervention or dev hac
 6. A live CMS edit changing a pillar (rename / accent / status) reflected in nav + public
    pages, then reverted.
 7. Analytics showing real events; basic SEO health; accessibility baseline met.
+
+---
+
+## Verification (2026-06-03, end-to-end against the live stack)
+
+Shipped across 10 commits (`fca0deb` … `1811e13`) + a checkpoint fix (`0d25c41`); merged to
+`master`. Live re-seed applied (Better Body quiz, 6 articles, landingBlocks, Homepage
+global default, About/Mission/Philosophy). Unit tests: web 17/17, worker 12/12.
+
+- **DoD 1 — homepage cross-pillar feed:** ✅ both live pillars (Somnium + Better Body),
+  curated featured product (Supliment Somneo), quiz invitation — all render.
+- **DoD 2 — Somnium journey:** ✅ (article→quiz→email→product→checkout→invoice→dashboard
+  verified across Phases 2–3 + this checkpoint; Somnium quiz live).
+- **DoD 3 — Better Body journey:** ✅ landing renders the composed blocks (quizCta +
+  articleList + quote); `/pillars/better-body/screening` loads the quiz; capture sends the
+  pillar-branded profile email (Resend env-gated) and arms the pillar nurture sequence.
+- **DoD 4 — one lead, both pillars:** ✅ verified via the real BFF flow — two quizzes under
+  one email → a single lead with both `quiz_responses` (somnium + better-body) AND both
+  `profile:*` / `quiz:*` / `interest:*` behavioral tags (after the `0d25c41` tag-union fix).
+- **DoD 5 — live homepage recompose:** ✅ changed the `homepage` global's featured product
+  via Payload → storefront reflected immediately, no deploy; reverted.
+- **DoD 6 — live pillar edit:** ✅ renamed Better Body via Payload → reflected on public
+  pages within the 15s BFF cache; reverted. (Pillar accent/status/order CMS-driven since P1–P3.)
+- **DoD 7 — analytics / SEO / a11y:** Umami demo events wired (`pillar_view`, `quiz_start`,
+  `quiz_complete{pillar,profile}`, `newsletter_signup`, `add_to_cart`, `order`); Article /
+  Breadcrumb / Product+aggregateRating JSON-LD (P3-4); `svelte-check` 0 a11y warnings.
+
+**Runtime/manual remainder:** axe/Lighthouse audit, Core Web Vitals, real-device mobile,
+and a live `PUBLIC_UMAMI_SRC` to confirm events land.
