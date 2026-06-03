@@ -5,9 +5,13 @@
   import { formatPrice } from '$lib/links'
   import { getLocale } from '$lib/paraglide/runtime'
   import Disclaimer from '$lib/components/Disclaimer.svelte'
+  import { track } from '$lib/analytics'
 
   let { data, form }: { data: PageData; form: ActionData } = $props()
   let submitting = $state(false)
+  $effect(() => {
+    if ((form as any)?.order) track('order', { id: (form as any).order.displayId })
+  })
 
   // Arm abandoned-cart recovery once the shopper provides a valid email, before
   // they finish. Fire-and-forget; failures are silent and never block checkout.

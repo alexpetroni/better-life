@@ -3,9 +3,11 @@
   import * as m from '$lib/paraglide/messages'
   import ArticleCard from '$lib/components/ArticleCard.svelte'
   import LandingBlocks from '$lib/components/LandingBlocks.svelte'
+  import { track } from '$lib/analytics'
 
   let { data }: { data: PageData } = $props()
   const accent = $derived(data.pillar.accentColor ?? '#4f46e5')
+  $effect(() => track('pillar_view', { pillar: data.pillar.slug }))
   const hero = $derived(data.pillar.hero)
   const heroCta = $derived(hero?.ctaLabel && hero?.ctaHref ? { label: hero.ctaLabel, href: hero.ctaHref } : null)
   const hasBlocks = $derived((data.blocks?.length ?? 0) > 0)

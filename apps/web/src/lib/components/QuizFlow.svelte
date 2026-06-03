@@ -2,6 +2,7 @@
   import { enhance } from '$app/forms'
   import type { QuizDefinition } from '@better-life/contracts'
   import * as m from '$lib/paraglide/messages'
+  import { track } from '$lib/analytics'
   import Disclaimer from './Disclaimer.svelte'
 
   // Pillar-agnostic screening flow (quiz → result → email capture → confirmation),
@@ -27,6 +28,20 @@
   )
 
   let submitting = $state(false)
+
+  // Quiz funnel analytics (by pillar), fired once per transition.
+  let startedTracked = $state(false)
+  let completeTracked = $state(false)
+  $effect(() => {
+    if (step === 'quiz' && !startedTracked) {
+      startedTracked = true
+      track('quiz_start', { pillar: def.pillarSlug })
+    }
+    if ((step === 'result' || step === 'captured') && !completeTracked) {
+      completeTracked = true
+      track('quiz_complete', { pillar: def.pillarSlug, profile: form?.profileKey })
+    }
+  })
 </script>
 
 <section class="mx-auto max-w-2xl px-4 py-12">

@@ -2,9 +2,13 @@
   import { enhance } from '$app/forms'
   import type { PageData, ActionData } from './$types'
   import * as m from '$lib/paraglide/messages'
+  import { track } from '$lib/analytics'
 
   let { data, form }: { data: PageData; form: ActionData } = $props()
   let submitting = $state(false)
+  $effect(() => {
+    if (form?.success) track('newsletter_signup')
+  })
 </script>
 
 <svelte:head>

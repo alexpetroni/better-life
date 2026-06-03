@@ -5,9 +5,13 @@
   import { formatPrice } from '$lib/links'
   import { getLocale } from '$lib/paraglide/runtime'
   import RecommendationStrip from '$lib/components/RecommendationStrip.svelte'
+  import { track } from '$lib/analytics'
 
   let { data, form }: { data: PageData; form: ActionData } = $props()
   let submitting = $state(false)
+  $effect(() => {
+    if (form?.added) track('add_to_cart', { handle: data.product.handle })
+  })
 
   // Wishlist toggle state: seed from the server, then follow action results.
   let saved = $derived((form as any)?.saved ?? data.saved)
