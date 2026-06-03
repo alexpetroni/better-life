@@ -10,7 +10,7 @@ export async function getClient(): Promise<Payload> {
   return client
 }
 
-type Collection = 'pillars' | 'articles' | 'quizzes'
+type Collection = 'pillars' | 'articles' | 'quizzes' | 'pages'
 
 /**
  * Idempotent upsert keyed on the stable `slug`. Safe to re-run: existing docs

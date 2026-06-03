@@ -9,6 +9,7 @@ import { pillars } from './data/pillars'
 import { somniumSleepQuiz } from './data/quizzes/somnium-sleep'
 import { betterBodyMovementQuiz } from './data/quizzes/better-body-movement'
 import { articles } from './data/articles'
+import { pages } from './data/pages'
 
 const quizzes = [somniumSleepQuiz, betterBodyMovementQuiz]
 
@@ -79,7 +80,18 @@ async function main() {
       console.log(`  ${created ? '＋' : '↻'} article: ${a.slug} → ${a.pillarSlug}`)
     }
 
-    // ── 5. Homepage feed (editor-curated; a sensible default for the demo) ──────
+    // ── 5. Narrative pages (About / mission / philosophy) ──────────────────────
+    for (const pg of pages) {
+      const { created } = await upsertBySlug(payload, 'pages', pg.slug, {
+        title: pg.title,
+        status: 'published',
+        body: pg.body,
+        seo: pg.seo,
+      })
+      console.log(`  ${created ? '＋' : '↻'} page: ${pg.slug}`)
+    }
+
+    // ── 6. Homepage feed (editor-curated; a sensible default for the demo) ──────
     // Featured product set to the flagship SKU; articles + quiz invitation left
     // empty so they exercise the rule-based fallback. All editable in the CMS.
     await payload.updateGlobal({

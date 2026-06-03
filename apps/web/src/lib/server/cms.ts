@@ -143,6 +143,31 @@ export async function getHomepage(locale = 'ro'): Promise<HomepageConfig> {
   }
 }
 
+export interface CmsPage {
+  slug: string
+  title: string
+  bodyHtml: string
+  seo?: { metaTitle?: string; metaDescription?: string }
+}
+
+/** A free-form narrative page (About/mission/philosophy). Published-only for the public. */
+export async function getPage(slug: string, locale = 'ro'): Promise<CmsPage | null> {
+  const data = await cmsFetch<{ docs: any[] }>(
+    `/pages?where[slug][equals]=${encodeURIComponent(slug)}&limit=1`,
+    locale
+  )
+  const doc = data?.docs?.[0]
+  if (!doc || doc.status !== 'published') return null
+  return {
+    slug: doc.slug,
+    title: doc.title,
+    bodyHtml: renderLexical(doc.body),
+    seo: doc.seo
+      ? { metaTitle: doc.seo.metaTitle ?? undefined, metaDescription: doc.seo.metaDescription ?? undefined }
+      : undefined,
+  }
+}
+
 export async function getArticles(locale = 'ro'): Promise<Article[]> {
   const data = await cmsFetch<{ docs: any[] }>(
     '/articles?limit=100&depth=1&sort=-publishedAt&where[status][equals]=published',

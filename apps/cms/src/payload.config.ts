@@ -10,6 +10,7 @@ import { Pillars } from './collections/Pillars'
 import { Articles } from './collections/Articles'
 import { Quizzes } from './collections/Quizzes'
 import { Reviews } from './collections/Reviews'
+import { Pages } from './collections/Pages'
 import { Homepage } from './globals/Homepage'
 
 const filename = fileURLToPath(import.meta.url)
@@ -28,7 +29,7 @@ export default buildConfig({
       titleSuffix: '· Better Life CMS',
     },
   },
-  collections: [Users, Pillars, Articles, Quizzes, Reviews],
+  collections: [Users, Pillars, Articles, Quizzes, Reviews, Pages],
   globals: [Homepage],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || 'dev-secret-change-me',

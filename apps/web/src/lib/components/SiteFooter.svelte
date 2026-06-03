@@ -23,6 +23,9 @@
       <a class="font-medium text-[var(--color-ink-soft)] hover:text-[var(--color-ink)]" href="/newsletter">
         {m.footer_newsletter()}
       </a>
+      <a class="text-[var(--color-ink-soft)] hover:text-[var(--color-ink)]" href="/about">{m.footer_about()}</a>
+      <a class="text-[var(--color-ink-soft)] hover:text-[var(--color-ink)]" href="/mission">{m.footer_mission()}</a>
+      <a class="text-[var(--color-ink-soft)] hover:text-[var(--color-ink)]" href="/philosophy">{m.footer_philosophy()}</a>
       {#each legalLinks as link (link.href)}
         <a class="text-[var(--color-muted)] hover:text-[var(--color-ink)]" href={link.href}>{link.label}</a>
       {/each}
