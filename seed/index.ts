@@ -79,6 +79,16 @@ async function main() {
       console.log(`  ${created ? '＋' : '↻'} article: ${a.slug} → ${a.pillarSlug}`)
     }
 
+    // ── 5. Homepage feed (editor-curated; a sensible default for the demo) ──────
+    // Featured product set to the flagship SKU; articles + quiz invitation left
+    // empty so they exercise the rule-based fallback. All editable in the CMS.
+    await payload.updateGlobal({
+      slug: 'homepage',
+      data: { featuredProductHandle: 'somneo-supliment' },
+      overrideAccess: true,
+    })
+    console.log('  ↻ homepage: featured product = somneo-supliment (articles/quiz on fallback)')
+
     // ── Demo admin user (dev convenience) ──────────────────────────────────────
     const { created: adminCreated } = await ensureAdminUser(
       payload,

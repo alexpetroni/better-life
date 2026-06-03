@@ -1,7 +1,8 @@
 <script lang="ts">
   import type { PageData } from './$types'
   import * as m from '$lib/paraglide/messages'
-  import { pillarHref } from '$lib/links'
+  import { pillarHref, formatPrice } from '$lib/links'
+  import { getLocale } from '$lib/paraglide/runtime'
   import ArticleCard from '$lib/components/ArticleCard.svelte'
 
   let { data }: { data: PageData } = $props()
@@ -70,9 +71,27 @@
   {/if}
 </section>
 
-<!-- featured_product: rendered hidden until Phase 2 (no product exists yet) -->
+<!-- featured_product: editor-curated via the homepage global -->
 {#if data.featuredProduct}
-  <!-- Phase 2 will render the featured product here. -->
+  <section class="mx-auto max-w-5xl px-4 py-8">
+    <h2 class="text-sm font-semibold uppercase tracking-wide text-[var(--color-muted)]">
+      {m.home_featured_product_title()}
+    </h2>
+    <a
+      href={`/somnium/shop/${data.featuredProduct.handle}`}
+      class="mt-4 flex items-center justify-between gap-4 rounded-xl border border-[var(--color-line)] bg-[var(--color-surface)] p-6 transition-shadow hover:shadow-md"
+    >
+      <div>
+        <p class="text-lg font-bold">{data.featuredProduct.title}</p>
+        {#if data.featuredProduct.description}
+          <p class="mt-1 max-w-xl text-sm text-[var(--color-ink-soft)]">{data.featuredProduct.description}</p>
+        {/if}
+      </div>
+      <span class="shrink-0 text-lg font-extrabold" style="color: var(--color-accent)">
+        {formatPrice(data.featuredProduct.amount, data.featuredProduct.currency, getLocale())}
+      </span>
+    </a>
+  </section>
 {/if}
 
 <!-- Quiz invitation -->
@@ -85,7 +104,7 @@
       <h2 class="text-2xl font-bold">{m.home_quiz_invitation_title()}</h2>
       <p class="mx-auto mt-2 max-w-xl text-[var(--color-ink-soft)]">{m.home_quiz_invitation_body()}</p>
       <a
-        href="/screening"
+        href={data.quizHref ?? '/screening'}
         class="mt-6 inline-block rounded-lg px-6 py-3 font-semibold text-white"
         style="background-color: {data.accentBySlug[data.quizPillar.slug]};"
       >

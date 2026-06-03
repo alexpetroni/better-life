@@ -17,6 +17,12 @@ export function articleHref(article: { slug: string; pillarSlug: string }): stri
     : `/articles/${article.slug}`
 }
 
+/** Where to take a pillar's screening quiz. Standalone pillars own a top-level
+ *  route (Somnium → /screening); others use the generic pillar screening route. */
+export function screeningHref(pillar: { slug: string }): string {
+  return STANDALONE_PILLARS.has(pillar.slug) ? '/screening' : `/pillars/${pillar.slug}/screening`
+}
+
 export function formatPrice(amount: number | null | undefined, currency = 'ron', locale = 'ro'): string {
   if (amount == null) return ''
   try {
