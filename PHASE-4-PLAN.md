@@ -1,9 +1,10 @@
 # Better Life · Phase 4 Plan — Second Pillar and Demo Polish
 
 **Status:** ✅ COMPLETE — all 10 build-order steps implemented and merged to `master`, then
-verified end-to-end against the live stack (2026-06-03). See the Verification section. Remaining work is
-runtime/manual only: axe/Lighthouse a11y audit, Core Web Vitals, real-device mobile,
-and pointing `PUBLIC_UMAMI_SRC` at a live Umami instance.
+verified end-to-end against the live stack (2026-06-03), incl. an axe-core accessibility
+audit (0 WCAG A/AA violations across 12 pages). See the Verification section. Remaining work
+is runtime/manual only: Lighthouse Core Web Vitals, real-device mobile, and pointing
+`PUBLIC_UMAMI_SRC` at a live Umami instance.
 
 Phase 4 goal: a demo-ready functional prototype that proves the architecture, not
 Somnium-in-a-box. A second pillar goes genuinely live (content + landing + quiz, **no
@@ -235,7 +236,10 @@ global default, About/Mission/Philosophy). Unit tests: web 17/17, worker 12/12.
   pages within the 15s BFF cache; reverted. (Pillar accent/status/order CMS-driven since P1–P3.)
 - **DoD 7 — analytics / SEO / a11y:** Umami demo events wired (`pillar_view`, `quiz_start`,
   `quiz_complete{pillar,profile}`, `newsletter_signup`, `add_to_cart`, `order`); Article /
-  Breadcrumb / Product+aggregateRating JSON-LD (P3-4); `svelte-check` 0 a11y warnings.
+  Breadcrumb / Product+aggregateRating JSON-LD (P3-4); **axe-core WCAG 2.0/2.1 A+AA audit of
+  12 Somnium + Better Body pages → 0 violations** after fixes (`64a8ea1`): error-page
+  `<title>`, Better Body accent `#16A34A`→`#15803D` (3.3→5.0:1), PillarBadge solid-bg +
+  white text. `svelte-check` 0 a11y warnings.
 
-**Runtime/manual remainder:** axe/Lighthouse audit, Core Web Vitals, real-device mobile,
-and a live `PUBLIC_UMAMI_SRC` to confirm events land.
+**Runtime/manual remainder:** Lighthouse Core Web Vitals, real-device mobile, and a live
+`PUBLIC_UMAMI_SRC` to confirm events land. (axe-core a11y audit: done.)
