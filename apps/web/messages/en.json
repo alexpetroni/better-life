@@ -75,6 +75,7 @@
   "newsletter_title": "Get the best ideas on wellbeing",
   "newsletter_subtitle": "An occasional email, no noise. Just useful things about sleep, body, and mind.",
   "newsletter_email_label": "Email address",
+  "newsletter_interests_label": "What interests you? (optional)",
   "newsletter_consent": "I agree to receive the Better Life newsletter with tips and news. I can unsubscribe anytime.",
   "newsletter_submit": "Subscribe",
   "newsletter_consent_required": "Tick consent so you can subscribe.",

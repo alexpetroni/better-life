@@ -1,9 +1,9 @@
 <script lang="ts">
   import { enhance } from '$app/forms'
-  import type { ActionData } from './$types'
+  import type { PageData, ActionData } from './$types'
   import * as m from '$lib/paraglide/messages'
 
-  let { form }: { form: ActionData } = $props()
+  let { data, form }: { data: PageData; form: ActionData } = $props()
   let submitting = $state(false)
 </script>
 
@@ -48,6 +48,20 @@
           <p class="mt-1 text-sm text-red-600">{m.capture_email_invalid()}</p>
         {/if}
       </div>
+
+      {#if data.pillars.length}
+        <fieldset class="rounded-lg border border-[var(--color-line)] p-4">
+          <legend class="px-1 text-sm font-medium">{m.newsletter_interests_label()}</legend>
+          <div class="mt-2 space-y-2">
+            {#each data.pillars as pillar (pillar.slug)}
+              <label class="flex items-center gap-3 text-sm">
+                <input type="checkbox" name="interest" value={pillar.slug} class="h-4 w-4" />
+                <span>{pillar.name}</span>
+              </label>
+            {/each}
+          </div>
+        </fieldset>
+      {/if}
 
       <div class="flex items-start gap-3">
         <input id="nl-consent" name="consent" type="checkbox" class="mt-1 h-4 w-4" />
