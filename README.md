@@ -18,7 +18,9 @@ and personalized follow-up — all reconfigurable in the CMS without a deploy.
    cross-pillar identity + discovery, CMS-recomposable homepage + composable pillar landings,
    CMS-authored narrative pages, accessibility + Core Web Vitals pass.
 
-See `CLAUDE.md` for the engineering constitution and `PHASE-{1,2,3,4}-PLAN.md` for each phase's design.
+See `CLAUDE.md` for the engineering constitution, `PHASE-{1,2,3,4}-PLAN.md` for each phase's design,
+and **`docs/content-guide.md`** for how to run the site day-to-day (pillars, articles, quizzes,
+products, reviews, the homepage feed — mostly no-deploy CMS edits).
 
 ## Stack
 
