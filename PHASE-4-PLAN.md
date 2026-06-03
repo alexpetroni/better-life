@@ -2,8 +2,9 @@
 
 **Status:** ✅ COMPLETE — all 10 build-order steps implemented and merged to `master`, then
 verified end-to-end against the live stack (2026-06-03), incl. an axe-core accessibility
-audit (0 WCAG A/AA violations across 12 pages). See the Verification section. Remaining work
-is runtime/manual only: Lighthouse Core Web Vitals, real-device mobile, and pointing
+audit (0 WCAG A/AA violations across 12 pages) and a Lighthouse production-build pass
+(perf 98–99, a11y/best-practices/SEO 100, Core Web Vitals all green). See the Verification
+section. Remaining work is runtime/manual only: real-device mobile review and pointing
 `PUBLIC_UMAMI_SRC` at a live Umami instance.
 
 Phase 4 goal: a demo-ready functional prototype that proves the architecture, not
@@ -239,7 +240,9 @@ global default, About/Mission/Philosophy). Unit tests: web 17/17, worker 12/12.
   Breadcrumb / Product+aggregateRating JSON-LD (P3-4); **axe-core WCAG 2.0/2.1 A+AA audit of
   12 Somnium + Better Body pages → 0 violations** after fixes (`64a8ea1`): error-page
   `<title>`, Better Body accent `#16A34A`→`#15803D` (3.3→5.0:1), PillarBadge solid-bg +
-  white text. `svelte-check` 0 a11y warnings.
+  white text. `svelte-check` 0 a11y warnings. **Lighthouse (production build, mobile lab,
+  5 key pages):** Performance 98–99, Accessibility 100, Best Practices 100, SEO 100; **Core
+  Web Vitals all green** — LCP 1.6–2.0s (≤2.5), CLS 0.000 (≤0.1), TBT 0ms (≤200).
 
-**Runtime/manual remainder:** Lighthouse Core Web Vitals, real-device mobile, and a live
-`PUBLIC_UMAMI_SRC` to confirm events land. (axe-core a11y audit: done.)
+**Runtime/manual remainder:** real-device mobile review, and a live `PUBLIC_UMAMI_SRC` to
+confirm events land. (axe-core a11y + Lighthouse CWV: done.)
