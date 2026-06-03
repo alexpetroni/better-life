@@ -3,6 +3,11 @@
   import * as m from '$lib/paraglide/messages'
 </script>
 
+<svelte:head>
+  <title>{m.not_found_title()}</title>
+  <meta name="robots" content="noindex" />
+</svelte:head>
+
 <main id="main" class="mx-auto max-w-2xl px-4 py-24 text-center">
   <p class="text-sm font-semibold text-[var(--color-muted)]">{page.status}</p>
   <h1 class="mt-2 text-3xl font-bold">{m.not_found_title()}</h1>

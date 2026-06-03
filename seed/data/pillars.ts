@@ -50,7 +50,7 @@ export const pillars: SeedPillar[] = [
     name: 'Better Body',
     tagline: 'Mișcare, recuperare, energie.',
     icon: 'activity',
-    accentColor: '#16A34A',
+    accentColor: '#15803D', // green-700 — WCAG AA (5.0:1 on white); #16A34A was 3.3:1
     order: 2,
     status: 'live',
     hasShop: false,
