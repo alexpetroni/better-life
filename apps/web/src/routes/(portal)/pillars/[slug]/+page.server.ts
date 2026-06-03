@@ -14,6 +14,22 @@ export const load: PageServerLoad = async ({ params, locals }) => {
   const canonical = pillarHref(pillar)
   if (canonical !== `/pillars/${pillar.slug}`) throw redirect(308, canonical)
 
-  const articles = (await getArticles(locale)).filter((a) => a.pillarSlug === pillar.slug)
-  return { pillar, articles }
+  const allArticles = await getArticles(locale)
+  const articles = allArticles.filter((a) => a.pillarSlug === pillar.slug)
+
+  // Resolve articleList blocks to actual articles (by this pillar, or by profile
+  // tag for cross-pillar surfacing). Other blocks pass through unchanged.
+  const blocks = (pillar.landingBlocks ?? []).map((b) => {
+    if (b.type === 'articleList') {
+      const pool =
+        b.source === 'tag' && b.tag
+          ? allArticles.filter((a) => a.profileTags?.includes(b.tag!))
+          : articles
+      return { ...b, articles: pool.slice(0, b.limit) }
+    }
+    return b
+  })
+
+  const quizHref = pillar.hasQuiz ? `/pillars/${pillar.slug}/screening` : null
+  return { pillar, articles, blocks, quizHref }
 }

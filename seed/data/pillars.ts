@@ -21,6 +21,8 @@ export interface SeedPillar {
     ctaLabel?: string
     ctaHref?: string
   }
+  /** Composable landing sections (Phase 4) — Payload blocks, each with a blockType. */
+  landingBlocks?: Record<string, unknown>[]
 }
 
 export const pillars: SeedPillar[] = [
@@ -58,6 +60,28 @@ export const pillars: SeedPillar[] = [
       heading: 'Un corp care te susține.',
       subheading: 'Mișcare sustenabilă, recuperare reală și energie care durează toată ziua.',
     },
+    // Starter composed landing (Phase 4). Editable in the CMS — proves the
+    // hero + landingBlocks rendering out of the box. (richText omitted here; add
+    // it in the admin.)
+    landingBlocks: [
+      {
+        blockType: 'quizCta',
+        heading: 'Nu știi de unde să începi?',
+        body: 'Fă testul de 30 de secunde și află ce îți blochează energia — primești pași concreți pentru profilul tău.',
+        ctaLabel: 'Începe testul',
+      },
+      {
+        blockType: 'articleList',
+        heading: 'Articole Better Body',
+        source: 'pillar',
+        limit: 6,
+      },
+      {
+        blockType: 'quote',
+        text: 'Corpul răspunde la repetiție, nu la eroism. Mai puțin, dar mereu.',
+        attribution: 'Echipa Better Body',
+      },
+    ],
   },
   {
     slug: 'better-mind',

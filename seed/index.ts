@@ -30,6 +30,7 @@ async function main() {
       hasShop: p.hasShop,
       hasQuiz: p.hasQuiz,
       hero: p.hero,
+      landingBlocks: p.landingBlocks ?? [],
     })
     pillarIdBySlug.set(p.slug, id)
     console.log(`  ${created ? '＋' : '↻'} pillar: ${p.slug} (${p.status})`)
