@@ -1,5 +1,5 @@
 import type { Cookies } from '@sveltejs/kit'
-import { queryOne } from './db'
+import { query, queryOne } from './db'
 import { findLeadByCustomerId } from './identity'
 import { getCustomerMe } from './medusa'
 
@@ -48,4 +48,14 @@ export async function getLeadProfile(leadId: string): Promise<LeadProfile | null
       order by submitted_at desc limit 1`,
     [leadId]
   )
+}
+
+/** Every distinct quiz profile this lead holds across all pillars (cross-pillar
+ *  discovery: one lead, multiple pillar tags). */
+export async function getLeadProfileKeys(leadId: string): Promise<string[]> {
+  const rows = await query<{ profile_key: string }>(
+    'select distinct profile_key from app.quiz_responses where lead_id = $1 and profile_key is not null',
+    [leadId]
+  )
+  return rows.map((r) => r.profile_key)
 }

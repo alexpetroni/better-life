@@ -5,6 +5,7 @@
   import { formatPrice, formatDate } from '$lib/links'
   import { getLocale } from '$lib/paraglide/runtime'
   import RecommendationStrip from '$lib/components/RecommendationStrip.svelte'
+  import ArticleCard from '$lib/components/ArticleCard.svelte'
 
   let { data, form }: { data: PageData; form: ActionData } = $props()
 </script>
@@ -62,6 +63,23 @@
     {/if}
 
     <RecommendationStrip heading={m.recommend_for_you()} products={data.recommendations} />
+
+    <!-- Cross-pillar content discovery: articles from any live pillar matching the
+         lead's profile tags across every quiz they've taken. -->
+    {#if data.articleRecs.length}
+      <section class="mt-12">
+        <h2 class="text-xl font-bold">{m.account_reading_title()}</h2>
+        <div class="mt-4 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {#each data.articleRecs as article (article.slug)}
+            <ArticleCard
+              {article}
+              pillarName={data.nameBySlug[article.pillarSlug]}
+              accent={data.accentBySlug[article.pillarSlug] ?? '#4f46e5'}
+            />
+          {/each}
+        </div>
+      </section>
+    {/if}
 
     <form method="POST" action="?/logout" use:enhance class="mt-8">
       <button class="rounded-lg border border-[var(--color-line)] px-5 py-2 font-semibold">{m.account_logout()}</button>

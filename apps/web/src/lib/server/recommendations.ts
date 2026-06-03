@@ -1,3 +1,4 @@
+import type { Article } from '@better-life/contracts'
 import { listProducts, type StoreProduct } from './medusa'
 
 // Rule-based recommendations (P3-3, locked decision): match a lead's quiz profile
@@ -41,4 +42,27 @@ export async function recommendForProfile(
 ): Promise<StoreProduct[]> {
   const products = await listProducts()
   return rankByProfile(products, profileKey, opts)
+}
+
+// ── Cross-pillar content discovery (Phase 4) ─────────────────────────────────
+// Rank articles by how many of the lead's profile tags they carry. Because a
+// lead can hold profiles from several pillars (and articles can be tagged across
+// pillars — the step-2 bridges), this naturally surfaces content from multiple
+// pillars. Unlike products, content recs show ONLY tag-matches (relevance over
+// filler): no fallback to untagged articles.
+export function rankArticlesByProfiles(
+  articles: Article[],
+  profileKeys: string[],
+  opts: { excludeSlugs?: string[]; limit?: number } = {}
+): Article[] {
+  const keys = new Set(profileKeys)
+  if (keys.size === 0) return []
+  const exclude = new Set(opts.excludeSlugs ?? [])
+  return articles
+    .filter((a) => !exclude.has(a.slug))
+    .map((a) => ({ a, score: (a.profileTags ?? []).filter((t) => keys.has(t)).length }))
+    .filter((s) => s.score > 0)
+    .sort((x, y) => y.score - x.score)
+    .slice(0, opts.limit ?? 3)
+    .map((s) => s.a)
 }

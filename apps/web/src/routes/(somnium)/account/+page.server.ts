@@ -9,16 +9,27 @@ import {
   listProducts,
 } from '$lib/server/medusa'
 import { promoteLeadToCustomer, findLeadByCustomerId } from '$lib/server/identity'
-import { getLeadProfile } from '$lib/server/me'
-import { rankByProfile } from '$lib/server/recommendations'
+import { getLeadProfile, getLeadProfileKeys } from '$lib/server/me'
+import { rankByProfile, rankArticlesByProfiles } from '$lib/server/recommendations'
 import { listWishlistHandles } from '$lib/server/wishlist'
-import { getQuizBySlug } from '$lib/server/cms'
+import { getQuizBySlug, getArticles } from '$lib/server/cms'
+import { loadPillars } from '$lib/server/pillars'
 import { isEmail } from '$lib/server/validate'
 
 const COOKIE = 'bl_session'
 const QUIZ_SLUG = 'somnium-sleep'
 
-const EMPTY = { customer: null, orders: [], profile: null, addresses: [], recommendations: [], wishlistCount: 0 }
+const EMPTY = {
+  customer: null,
+  orders: [],
+  profile: null,
+  addresses: [],
+  recommendations: [],
+  wishlistCount: 0,
+  articleRecs: [],
+  accentBySlug: {},
+  nameBySlug: {},
+}
 
 export const load: PageServerLoad = async ({ cookies, locals }) => {
   const token = cookies.get(COOKIE)
@@ -32,14 +43,18 @@ export const load: PageServerLoad = async ({ cookies, locals }) => {
 
   // Personalization: profile summary, profile-matched recommendations (excluding
   // already-purchased), and a wishlist count. All best-effort.
+  const locale = locals.locale ?? 'ro'
   const lead = await findLeadByCustomerId(customer.id)
   let profile: { key: string; title: string } | null = null
   let recommendations: Awaited<ReturnType<typeof listProducts>> = []
   let wishlistCount = 0
+  let articleRecs: Awaited<ReturnType<typeof getArticles>> = []
+  const accentBySlug: Record<string, string> = {}
+  const nameBySlug: Record<string, string> = {}
   if (lead) {
     const lp = await getLeadProfile(lead.id)
     if (lp) {
-      const def = await getQuizBySlug(QUIZ_SLUG, locals.locale ?? 'ro')
+      const def = await getQuizBySlug(QUIZ_SLUG, locale)
       const p = def?.profiles.find((x) => x.key === lp.profileKey)
       profile = { key: lp.profileKey, title: p?.title ?? lp.profileKey }
     }
@@ -49,9 +64,36 @@ export const load: PageServerLoad = async ({ cookies, locals }) => {
       limit: 3,
     })
     wishlistCount = (await listWishlistHandles(lead.id)).length
+
+    // Cross-pillar content discovery: articles (from any live pillar) matching
+    // this lead's profile tags across all the quizzes they've taken.
+    const profileKeys = await getLeadProfileKeys(lead.id)
+    if (profileKeys.length) {
+      const [pillars, articles] = await Promise.all([loadPillars(locale), getArticles(locale)])
+      const liveSlugs = new Set(pillars.filter((pl) => pl.status === 'live').map((pl) => pl.slug))
+      for (const pl of pillars) {
+        accentBySlug[pl.slug] = pl.accentColor ?? '#4f46e5'
+        nameBySlug[pl.slug] = pl.name
+      }
+      articleRecs = rankArticlesByProfiles(
+        articles.filter((a) => liveSlugs.has(a.pillarSlug)),
+        profileKeys,
+        { limit: 3 }
+      )
+    }
   }
 
-  return { customer, orders, profile, addresses: customer.addresses, recommendations, wishlistCount }
+  return {
+    customer,
+    orders,
+    profile,
+    addresses: customer.addresses,
+    recommendations,
+    wishlistCount,
+    articleRecs,
+    accentBySlug,
+    nameBySlug,
+  }
 }
 
 export const actions: Actions = {
